@@ -416,6 +416,10 @@
         }
         @keyframes brushStroke { 0% { transform: translate(-58px, 0) rotate(-16deg); } 50% { transform: translate(58px, 8px) rotate(16deg); } 100% { transform: translate(-58px, 0) rotate(-16deg); } }
         @keyframes furFall { 0% { opacity: 0; transform: translateY(0) rotate(0deg); } 25% { opacity: 0.95; } 100% { opacity: 0; transform: translateY(96px) rotate(170deg); } }
+        /* 排版调试面板：元素点选高亮 */
+        body.tune-on [data-tune-target] { outline: 2px dashed transparent; }
+        body.tune-on [data-tune-target]:hover { outline: 2px dashed #A57DE0; outline-offset: 2px; cursor: pointer; }
+        body.tune-on [data-tune-target].tune-sel { outline: 3px solid #FF8A5C; outline-offset: 2px; border-radius: 10px; }
         /* 两行截断回退（CDN Tailwind 未生成 line-clamp 时兜底，萌宠道具卡高度依赖它） */
         .line-clamp-2 {
             display: -webkit-box;

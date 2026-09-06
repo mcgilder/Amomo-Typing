@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Mode, Tab, TypingStats, ExerciseItem, PetItem, PetAccessory, PetTool, Achievement } from './types';
 import { TEXTBOOK_RESOURCES, KEYBOARD_LAYOUT } from './constants';
 import { EN_EXAMPLE_ZH } from './enExampleZh';
-import LayoutTuner, { loadTune, saveTune, TUNE_DEFAULTS, LayoutTune } from './components/LayoutTuner';
+import LayoutTuner, { loadTune, saveTune, LayoutTune, TargetTune } from './components/LayoutTuner';
 import {
   speakDirect,
   prewarmSpeech,
@@ -225,9 +225,10 @@ export const App: React.FC = () => {
     return item.chinese || item.text;
   };
 
-  // ===== 🎛 排版调试面板（用户自助微调，参数可发开发固化） =====
+  // ===== 🎛 排版调试面板 v2：页面点选元素（可多选）+ 滑块批量调整 =====
   const [tune, setTune] = useState<LayoutTune>(() => loadTune());
   const [tunerOpen, setTunerOpen] = useState(false);
+  const [selTargets, setSelTargets] = useState<string[]>([]);
   useEffect(() => { saveTune(tune); }, [tune]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -239,6 +240,28 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  // 面板开启时：页面元素可点选（捕获阶段拦截，避免误触应用自身的点击）
+  useEffect(() => {
+    if (!tunerOpen) return;
+    document.body.classList.add('tune-on');
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement)?.closest?.('[data-tune-target]') as HTMLElement | null;
+      if (!el) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const id = el.getAttribute('data-tune-target')!;
+      setSelTargets(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      playSoundEffect('click', 0.1);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => {
+      document.body.classList.remove('tune-on');
+      document.removeEventListener('click', onClick, true);
+    };
+  }, [tunerOpen]);
+  // 读取某元素的自定义（无则空对象走默认）
+  const tt = (id: string): TargetTune => tune.t[id] || {};
+  const selCls = (id: string) => (selTargets.includes(id) ? ' tune-sel' : '');
 
   // ===== 打字区对齐：单词垂直中线 = 键盘 G 键中线（音标/中文同轴线自然居中） =====
   const wordCardRef = useRef<HTMLDivElement>(null);
@@ -856,7 +879,13 @@ export const App: React.FC = () => {
                 行2=键盘(8列)+统计(4列)；单词水平居中即与键盘的中线对齐 */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
               {/* 行1：目标单词卡（全宽） */}
-              <div ref={wordCardRef} className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden" style={{ minHeight: tune.cardMinH }}>
+              <div ref={wordCardRef} data-tune-target="card"
+                className={'lg:col-span-12 story-card relative overflow-hidden' + selCls('card')}
+                style={{
+                  minHeight: tt('card').minH ?? 228,
+                  padding: tt('card').pad !== undefined ? tt('card').pad : undefined,
+                  transform: 'translate(' + (tt('card').dx || 0) + 'px, ' + (tt('card').dy || 0) + 'px)',
+                }}>
                 {/* 进度条 */}
                 <div className="absolute top-0 left-0 h-2.5 bg-gradient-to-r from-[#FF8A5C] via-[#FFC94D] to-[#6BCB77] rounded-r-full transition-all duration-300" style={{ width: `${progress}%` }} />
 
@@ -884,9 +913,12 @@ export const App: React.FC = () => {
                 ) : (
                   <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-4 items-center pt-6">
                    {/* 左 7/12：单词 + 音标 + 中文与朗读（参照定稿排布） */}
-                   <div ref={leftColRef}
-                     className="flex flex-col items-center justify-center"
-                     style={{ transform: 'translateX(' + wordShift + 'px)', gap: tune.leftGap }}>
+                   <div ref={leftColRef} data-tune-target="leftCol"
+                     className={'flex flex-col items-center justify-center' + selCls('leftCol')}
+                     style={{
+                       transform: 'translate(' + (wordShift + (tt('leftCol').dx || 0)) + 'px, ' + (tt('leftCol').dy || 0) + 'px)',
+                       gap: tt('leftCol').gap ?? 6,
+                     }}>
                     {/* Chinese PinYin Mode */}
                     {mode === Mode.CHINESE ? (
                       <>
@@ -908,9 +940,10 @@ export const App: React.FC = () => {
                               return (
                                 <div key={i} className="relative flex flex-col items-center">
                                   <span
-                                    className={`text-5xl md:text-6xl font-black transition-all font-mono leading-none ${
+                                    className={`font-black transition-all font-mono leading-none ${
                                       isTyped ? 'text-[#C4AE97]' : 'text-[#2E93C4]'
                                     }`}
+                                    style={{ fontSize: tt('word').fs ? Math.round(tt('word').fs * 0.78) : 60 }}
                                   >
                                     {tonedChars[i] ?? char}
                                   </span>
@@ -934,7 +967,9 @@ export const App: React.FC = () => {
                     ) : (
                       /* English Mode with Syllable Colors（单词与键盘同列居中，音标与例句在内容下方） */
                       <div className="flex flex-col items-center gap-1.5 w-full">
-                      <div ref={wordRowRef} className="flex flex-wrap justify-center items-end gap-x-2 gap-y-3">
+                      <div ref={wordRowRef} data-tune-target="word"
+                        className={'word-row flex flex-wrap justify-center items-end gap-x-2 gap-y-3' + selCls('word')}
+                        style={{ transform: 'translate(' + (tt('word').dx || 0) + 'px, ' + (tt('word').dy || 0) + 'px)' }}>
                         {(() => {
                           let charCounter = 0;
                           return currentSyllables.map((syllable, sIndex) => {
@@ -971,9 +1006,10 @@ export const App: React.FC = () => {
                                   return (
                                     <div key={cIndex} className="relative">
                                       <span
-                                        className={`text-6xl md:text-8xl font-black transition-all leading-none font-mono ${
+                                        className={`font-black transition-all leading-none font-mono ${
                                           isTyped ? 'text-[#C4AE97]' : syllableColor
                                         }`}
+                                        style={{ fontSize: tt('word').fs ?? 96 }}
                                       >
                                         {char}
                                       </span>
@@ -989,7 +1025,12 @@ export const App: React.FC = () => {
                         })()}
                       </div>
                       {exerciseList[currentIndex]?.phonetic && (
-                        <span style={{ fontSize: tune.phonetic }} className="italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none">
+                        <span data-tune-target="phonetic"
+                          className={'italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none' + selCls('phonetic')}
+                          style={{
+                            fontSize: tt('phonetic').fs ?? 45,
+                            transform: 'translate(' + (tt('phonetic').dx || 0) + 'px, ' + (tt('phonetic').dy || 0) + 'px)',
+                          }}>
                           {exerciseList[currentIndex]?.phonetic}
                         </span>
                       )}
@@ -998,7 +1039,12 @@ export const App: React.FC = () => {
                     {/* 英语模式：中文翻译 + 单词发音按钮（音标下方，参照定稿排布） */}
                     {mode === Mode.ENGLISH && (
                       <div className="relative mt-1">
-                        <span style={{ fontSize: tune.trans }} className="font-black text-[#2E93C4] font-kids leading-none">
+                        <span data-tune-target="trans"
+                          className={'font-black text-[#2E93C4] font-kids leading-none' + selCls('trans')}
+                          style={{
+                            fontSize: tt('trans').fs ?? 45,
+                            transform: 'translate(' + (tt('trans').dx || 0) + 'px, ' + (tt('trans').dy || 0) + 'px)',
+                          }}>
                           {exerciseList[currentIndex]?.translation}
                         </span>
                         <button
@@ -1012,19 +1058,36 @@ export const App: React.FC = () => {
                     )}
                    </div>
                    {/* 右 5/12：例句（大字，比正文区加大30%）+ 例句中文 + 空格挑战提示 */}
-                   <div className="flex flex-col items-center justify-center text-center px-1 md:px-3" style={{ gap: tune.exGap }}>
+                   <div data-tune-target="exArea"
+                     className={'flex flex-col items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
+                     style={{
+                       gap: tt('exArea').gap ?? 10,
+                       transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
+                     }}>
                     {exerciseList[currentIndex]?.example && (
-                      <p style={{ fontSize: tune.exEn }} className="text-[#48A757] font-black italic font-kids leading-tight select-none">
+                      <p data-tune-target="exEn"
+                        className={'text-[#48A757] font-black italic font-kids leading-tight select-none' + selCls('exEn')}
+                        style={{
+                          fontSize: tt('exEn').fs ?? 57,
+                          transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
+                        }}>
                         {exerciseList[currentIndex]?.example}
                       </p>
                     )}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
-                      <p style={{ fontSize: tune.exZh }} className="text-[#2E93C4] font-black font-kids leading-tight">
+                      <p data-tune-target="exZh"
+                        className={'text-[#2E93C4] font-black font-kids leading-tight' + selCls('exZh')}
+                        style={{
+                          fontSize: tt('exZh').fs ?? 45,
+                          transform: 'translate(' + (tt('exZh').dx || 0) + 'px, ' + (tt('exZh').dy || 0) + 'px)',
+                        }}>
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
                       </p>
                     )}
                     {isWaitingForSpace && (
-                      <div className="bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2">
+                      <div data-tune-target="pill"
+                        className={'bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2' + selCls('pill')}
+                        style={{ transform: 'translate(' + (tt('pill').dx || 0) + 'px, ' + (tt('pill').dy || 0) + 'px)' }}>
                         <span>⌨️</span> 按下 [ 空格键 ] 挑战下一个
                       </div>
                     )}
@@ -1148,7 +1211,7 @@ export const App: React.FC = () => {
                 title="排版调试面板（Ctrl+Shift+L）"
               >🎛</button>
               {tunerOpen && (
-                <LayoutTuner tune={tune} onChange={setTune} onClose={() => setTunerOpen(false)} />
+                <LayoutTuner tune={tune} setTune={setTune} selected={selTargets} setSelected={setSelTargets} onClose={() => setTunerOpen(false)} />
               )}
             </>
           )}
