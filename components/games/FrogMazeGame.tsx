@@ -355,7 +355,7 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
       return;
     }
 
-    if (phase === 'typing' && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+    if (phase === 'typing' && e.key.length === 1 && (/([a-zA-Z])/.test(e.key) || e.key === ' ')) {
       handleChar(e.key.toLowerCase());
     }
   }, [map, phase, cycleSel, retreat, stack, handleChar]);

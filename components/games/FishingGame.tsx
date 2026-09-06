@@ -276,7 +276,7 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
   useKeyDown((e) => {
     if (finished || e.repeat) return;
     const key = e.key.toLowerCase();
-    if (!/^[a-z]$/.test(key)) return; // 字母键只用于打字
+    if (!/^[a-z]$/.test(key) && key !== ' ') return; // 字母与空格键只用于打字（词组含空格）
     const swimmers = fishRef.current.filter(f => f.state === 'swim');
     if (!swimmers.length) return;
 

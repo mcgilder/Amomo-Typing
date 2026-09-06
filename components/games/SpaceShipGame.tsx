@@ -314,7 +314,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
   useKeyDown((e: KeyboardEvent) => {
     if (finished || e.repeat) return;
     const key = e.key.toLowerCase();
-    if (!/^[a-z]$/.test(key)) return; // 字母键只用于打字
+    if (!/^[a-z]$/.test(key) && key !== ' ') return; // 字母与空格键只用于打字（词组含空格）
     const list = meteorsRef.current;
     if (!list.length) return;
 

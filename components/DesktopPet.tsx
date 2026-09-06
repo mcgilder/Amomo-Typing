@@ -498,9 +498,9 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[3.5fr_8.5fr] gap-5">
         {/* 左：宠物小屋 */}
-        <div className="lg:col-span-5 story-card p-6 flex flex-col items-center justify-between relative overflow-hidden min-h-[440px]"
+        <div className="story-card p-6 flex flex-col items-center justify-between relative overflow-hidden min-h-[440px]"
              style={{ background: 'linear-gradient(180deg, #FFF8EE 0%, #FDEBD0 60%, #F8E2C4 100%)' }}>
           {/* 房间装饰：窗户（日夜）+ 壁纸 */}
           <div className="absolute top-4 right-5 w-20 h-16 rounded-2xl border-4 border-[#E8A317] bg-gradient-to-b from-[#8FD4EC] to-[#B4E1F5] flex items-center justify-center overflow-hidden">
@@ -681,7 +681,7 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
         </div>
 
         {/* 右：控制台 */}
-        <div className="lg:col-span-7 story-card p-6 flex flex-col gap-5">
+        <div className="story-card p-6 flex flex-col gap-5">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {([
               { id: 'TOOLS', label: '🧸 互动道具' },
@@ -692,7 +692,7 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-max py-2.5 px-3 rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+                className={`flex-1 min-w-max py-2.5 px-3 rounded-2xl font-black text-sm md:text-base flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? tab.id === 'TOOLS' ? 'bg-[#6BCB77] text-white shadow-[0_4px_0_#48A757]'
                       : tab.id === 'PETS' ? 'bg-[#FF8A5C] text-white shadow-[0_4px_0_#E0633A]'
@@ -714,7 +714,7 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
                   <button
                     key={f}
                     onClick={() => setToolFilter(f)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-black transition-all ${
                       toolFilter === f ? 'bg-[#5B4636] text-white' : 'bg-[#FFF8EE] text-[#8A6F5C] border-2 border-[#FFE8C8] hover:bg-white'
                     }`}
                   >
@@ -728,25 +728,25 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
                     key={tool.id}
                     className="p-2.5 rounded-2xl border-3 border-[#FFE8C8] bg-[#FFF8EE]/60 hover:bg-white hover:border-[#FFC94D] hover:shadow-[0_4px_0_rgba(222,184,135,0.3)] transition-all flex items-center gap-2.5"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white border-3 border-[#FFE8C8] flex items-center justify-center text-2xl shrink-0 select-none">
+                    <div className="w-14 h-14 rounded-full bg-white border-3 border-[#FFE8C8] flex items-center justify-center text-3xl shrink-0 select-none">
                       {tool.emoji}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-black text-[15px] text-[#5B4636]">{tool.name}</span>
-                        {tool.hungerAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9E0] text-[#E0633A] px-1.5 rounded">饱食{tool.hungerAdd > 0 ? '+' : ''}{tool.hungerAdd}</span>}
-                        {tool.happyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9F0] text-[#E0678A] px-1.5 rounded">开心+{tool.happyAdd}</span>}
-                        {tool.cleanAdd !== 0 && <span className="text-[10px] font-bold bg-[#E3F2FA] text-[#2E93C4] px-1.5 rounded">清洁+{tool.cleanAdd}</span>}
-                        {tool.energyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFF3D6] text-[#8A5F00] px-1.5 rounded">精力{tool.energyAdd > 0 ? '+' : ''}{tool.energyAdd}</span>}
+                        <span className="font-black text-[22px] text-[#5B4636] leading-tight">{tool.name}</span>
+                        {tool.hungerAdd !== 0 && <span className="text-[15px] font-bold bg-[#FFE9E0] text-[#E0633A] px-1.5 rounded">饱食{tool.hungerAdd > 0 ? '+' : ''}{tool.hungerAdd}</span>}
+                        {tool.happyAdd !== 0 && <span className="text-[15px] font-bold bg-[#FFE9F0] text-[#E0678A] px-1.5 rounded">开心+{tool.happyAdd}</span>}
+                        {tool.cleanAdd !== 0 && <span className="text-[15px] font-bold bg-[#E3F2FA] text-[#2E93C4] px-1.5 rounded">清洁+{tool.cleanAdd}</span>}
+                        {tool.energyAdd !== 0 && <span className="text-[15px] font-bold bg-[#FFF3D6] text-[#8A5F00] px-1.5 rounded">精力{tool.energyAdd > 0 ? '+' : ''}{tool.energyAdd}</span>}
                       </div>
-                      <span className="text-[13px] text-[#8A6F5C] font-bold leading-snug line-clamp-2">{tool.desc}</span>
+                      <span className="text-[19px] text-[#8A6F5C] font-bold leading-snug line-clamp-2">{tool.desc}</span>
                     </div>
                     <button
                       onClick={() => handleUseTool(tool)}
-                      className="btn-candy btn-grass w-12 h-12 rounded-full shrink-0 flex flex-col items-center justify-center leading-none text-[11px] font-black transition-transform active:scale-90"
+                      className="btn-candy btn-grass w-14 h-14 rounded-full shrink-0 flex flex-col items-center justify-center leading-none text-[13px] font-black transition-transform active:scale-90"
                       title="使用道具"
                     >
-                      <span className="text-[13px]">🪙</span>
+                      <span className="text-[15px]">🪙</span>
                       <span className="mt-0.5">{tool.cost}</span>
                     </button>
                   </div>

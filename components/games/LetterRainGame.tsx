@@ -393,7 +393,7 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
   // 键盘：只在 falling 阶段接收字母输入
   useKeyDown((e) => {
     if (gameOverRef.current || phaseRef.current !== 'falling') return;
-    if (e.key.length !== 1 || !/[a-zA-Z]/.test(e.key)) return;
+    if (e.key.length !== 1 || (!/[a-zA-Z]/.test(e.key) && e.key !== ' ')) return; // 空格：词组需要
     const d = dropRef.current;
     if (!d) return;
     const k = e.key.toLowerCase();
@@ -521,7 +521,7 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
           {/* 字母雨滴（拟真水滴，左右对称、垂直下落不歪斜） */}
           {drop && (
             <div className="absolute z-20" style={{ left: `${drop.x}%`, top: drop.y, transform: 'translate(-50%,-50%)' }}>
-              <DropLetter ch={drop.letter.toUpperCase()} />
+              <DropLetter ch={drop.letter === ' ' ? '␣' : drop.letter.toUpperCase()} />
             </div>
           )}
 

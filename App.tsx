@@ -945,7 +945,7 @@ export const App: React.FC = () => {
                     {/* 英语模式：中文翻译 + 单词发音按钮（音标下方，参照定稿排布） */}
                     {mode === Mode.ENGLISH && (
                       <div className="flex items-center gap-2.5 mt-1">
-                        <span className="text-2xl md:text-3xl font-black text-[#2E93C4] font-kids">
+                        <span className="text-4xl md:text-[45px] font-black text-[#2E93C4] font-kids leading-none">
                           {exerciseList[currentIndex]?.translation}
                         </span>
                         <button
@@ -966,7 +966,7 @@ export const App: React.FC = () => {
                       </p>
                     )}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
-                      <p className="text-sm md:text-base text-[#8A6F5C] font-bold leading-snug">
+                      <p className="text-lg md:text-2xl text-[#8A6F5C] font-black font-kids leading-snug">
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
                       </p>
                     )}

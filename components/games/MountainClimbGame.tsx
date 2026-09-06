@@ -266,7 +266,7 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
   useKeyDown((e) => {
     if (finished || climbing || summit || fallActive || e.repeat) return;
     const key = e.key.toLowerCase();
-    if (!/^[a-z]$/.test(key)) return; // 字母键只用于打字
+    if (!/^[a-z]$/.test(key) && key !== ' ') return; // 字母与空格键只用于打字（词组含空格）
     // 坑洞警示阶段打字 = 掉进坑洞！
     if (holePhase) { fallToBase(); return; }
     const w = currentWord.typing;

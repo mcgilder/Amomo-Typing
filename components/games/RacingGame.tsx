@@ -172,8 +172,8 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
     const gapM = w.oppPos - w.position;
     const rubber = Math.max(-0.3, Math.min(0.26, gapM / 900));
     const baseNow = OPP_BASE * speedMul;
-    let oppTarget = w.speed * (1 + rubber) * 0.985;  // 紧咬玩家同速：需要持续敲词拉开差距
-    oppTarget = Math.max(baseNow * 0.72, Math.min(baseNow * 1.55, oppTarget));
+    let oppTarget = w.speed * (1 + rubber) * 1.0;    // 与玩家同速紧咬：必须靠氮气才能超越
+    oppTarget = Math.max(baseNow * 0.78, Math.min(baseNow * 1.62, oppTarget));
     w.oppSpeed += (oppTarget - w.oppSpeed) * Math.min(1, dt * 0.0012);
     // 对手前进（速度轻微起伏，像真人开车）
     w.oppPos += (w.oppSpeed * (0.94 + Math.sin(w.oppT / 4) * 0.1) * dt) / 3600;
@@ -298,7 +298,7 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
       switchLane(1);
       return;
     }
-    if (k.length === 1 && /[a-z]/i.test(k) && sign) {
+    if (k.length === 1 && (/([a-z])/i.test(k) || k === ' ') && sign) { // 空格：词组单词需要
       const c = k.toLowerCase();
       const target = sign.item.typing[sign.typed.length]?.toLowerCase();
       if (!target) return;

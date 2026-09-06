@@ -387,7 +387,7 @@ export const WhackMoleGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
   useKeyDown((e) => {
     const g = gRef.current;
     if (g.over) return;
-    if (e.key.length !== 1 || !/[a-z]/i.test(e.key)) return;
+    if (e.key.length !== 1 || (!/[a-z]/i.test(e.key) && e.key !== ' ')) return; // 空格：词组单词需要
     const k = e.key.toLowerCase();
     // 疾风时刻会有两只地鼠同时冒头：字母匹配任意一只"正需要这个字母"的地鼠，
     // 否则孩子打旧地鼠上的单词会毫无反应（体感 = 加速期没法打字）

@@ -142,7 +142,7 @@ export const TypedWord: React.FC<{
               : 'text-[#8A6F5C]'
           }`}
         >
-          {ch}
+          {ch === ' ' ? '␣' : ch}
         </span>
       ))}
     </div>
