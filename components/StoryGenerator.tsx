@@ -126,6 +126,13 @@ export const StoryGenerator: React.FC<StoryGeneratorProps> = ({
     if (!sentence || !currentStory.words.length) return sentence;
 
     // Filter valid translations and sort by length descending to match longer phrases first
+    // 变体回退：模型译文与正文偶有"的/了/们"等尾字出入，去尾字再匹配一次，根治中文标识漏标
+    const variantsOf = (t: string): string[] => {
+      const list = [t];
+      const stem = t.replace(/[的了吗呢们]$/, '');
+      if (stem && stem !== t && stem.length >= 2) list.push(stem);
+      return list;
+    };
     const sortedWordsWithIndex = currentStory.words
       .map((w, origIndex) => ({ ...w, origIndex }))
       .filter(w => w.translation && w.translation.trim().length > 0)
@@ -133,15 +140,17 @@ export const StoryGenerator: React.FC<StoryGeneratorProps> = ({
 
     if (!sortedWordsWithIndex.length) return sentence;
 
-    // Safe regex generation for all vocabulary words
+    // Safe regex generation for all vocabulary words（含变体，按长度降序保证长词优先）
+    const variantPairs = sortedWordsWithIndex.flatMap(w => variantsOf(w.translation.trim()).map(v => ({ v, w })));
+    variantPairs.sort((a, b) => b.v.length - a.v.length);
     const pattern = new RegExp(
-      `(${sortedWordsWithIndex.map(w => escapeRegExp(w.translation)).join('|')})`,
+      `(${variantPairs.map(p => escapeRegExp(p.v)).join('|')})`,
       'g'
     );
 
     const parts = sentence.split(pattern);
     return parts.map((part, pIdx) => {
-      const match = sortedWordsWithIndex.find(w => w.translation === part);
+      const match = variantPairs.find(p => p.v === part)?.w;
       if (match) {
         const palette = getPaletteByIndex(match.origIndex);
         const isHovered = hoveredWordIndex === match.origIndex;

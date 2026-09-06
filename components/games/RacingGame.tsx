@@ -170,10 +170,10 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
     // 以玩家实时速度为基准 + 距离差修正：对手领先越多开得越快、落后越多自动放慢，
     // 全程贴身缠斗——孩子必须持续敲词触发氮气才能完成超越，一停手就被反超
     const gapM = w.oppPos - w.position;
-    const rubber = Math.max(-0.3, Math.min(0.22, gapM / 900));
+    const rubber = Math.max(-0.3, Math.min(0.26, gapM / 900));
     const baseNow = OPP_BASE * speedMul;
-    let oppTarget = w.speed * (1 + rubber) * 0.96;   // 略慢于玩家同速：氮气期间可以完成超越
-    oppTarget = Math.max(baseNow * 0.6, Math.min(baseNow * 1.5, oppTarget));
+    let oppTarget = w.speed * (1 + rubber) * 0.985;  // 紧咬玩家同速：需要持续敲词拉开差距
+    oppTarget = Math.max(baseNow * 0.72, Math.min(baseNow * 1.55, oppTarget));
     w.oppSpeed += (oppTarget - w.oppSpeed) * Math.min(1, dt * 0.0012);
     // 对手前进（速度轻微起伏，像真人开车）
     w.oppPos += (w.oppSpeed * (0.94 + Math.sin(w.oppT / 4) * 0.1) * dt) / 3600;
@@ -287,12 +287,13 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
   useKeyDown((e) => {
     if (finishedRef.current) return;
     const k = e.key;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W') {
+    // ⚠️ 只用方向键换道：W/S 属于打字字母，会误触换道导致单词打不完
+    if (k === 'ArrowUp') {
       e.preventDefault();
       switchLane(-1);
       return;
     }
-    if (k === 'ArrowDown' || k === 's' || k === 'S') {
+    if (k === 'ArrowDown') {
       e.preventDefault();
       switchLane(1);
       return;
@@ -452,7 +453,7 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
               <div className="absolute inset-x-0 top-0 h-2 bg-white/15" />
               {/* 换道提示（铁律：↑↓ 换道，不是 A/S/D！） */}
               <div className="absolute left-3 top-1.5 text-[10px] font-black text-white/70 bg-black/25 px-2 py-0.5 rounded-lg">
-                ↑↓ / W S 换道
+                ↑↓ 换道
               </div>
 
               {/* 油桶障碍：从右侧滚来，近大远小（translate3d 定位） */}
@@ -608,7 +609,7 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
 
       <div className="w-full story-card p-4 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="text-xs text-[#8A6F5C] font-bold flex items-center gap-1.5">
-          <span>💡</span> 敲对路牌单词点燃氮气狂飙！↑↓ 或 W/S 键换道躲油桶，1000 米内超越蓝车车手！
+          <span>💡</span> 敲对路牌单词点燃氮气狂飙！↑↓ 方向键换道躲油桶，1000 米内超越蓝车车手！
         </div>
         <div className="flex items-center gap-3">
           <button

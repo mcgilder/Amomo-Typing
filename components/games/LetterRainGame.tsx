@@ -464,7 +464,6 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
         @keyframes umbrellaPop { 0%{transform:scale(.1) rotate(-14deg)} 62%{transform:scale(1.14) rotate(4deg)} 100%{transform:scale(1) rotate(0deg)} }
         @keyframes dripFall { 0%{transform:translateY(0);opacity:0} 25%{opacity:1} 100%{transform:translateY(13px);opacity:0} }
         @keyframes bounceOff { 0%{transform:translate(-50%,-50%) translate(0,0) rotate(0deg);opacity:1} 100%{transform:translate(-50%,-50%) translate(var(--bx),var(--by)) rotate(var(--br));opacity:0} }
-        @keyframes dropSway { 0%,100%{transform:translate(-50%,-50%) rotate(-6deg)} 50%{transform:translate(-50%,-50%) rotate(6deg)} }
         .umbrella-open { animation: umbrellaPop .42s cubic-bezier(.34,1.4,.64,1) both; }
         .animate-drip { animation: dripFall .95s ease-in infinite; }
       `}</style>
@@ -519,9 +518,9 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
             </div>
           </div>
 
-          {/* 字母雨滴（拟真水滴 + 下落时左右轻摆） */}
+          {/* 字母雨滴（拟真水滴，左右对称、垂直下落不歪斜） */}
           {drop && (
-            <div className="absolute z-20" style={{ left: `${drop.x}%`, top: drop.y, animation: 'dropSway 1.5s ease-in-out infinite' }}>
+            <div className="absolute z-20" style={{ left: `${drop.x}%`, top: drop.y, transform: 'translate(-50%,-50%)' }}>
               <DropLetter ch={drop.letter.toUpperCase()} />
             </div>
           )}

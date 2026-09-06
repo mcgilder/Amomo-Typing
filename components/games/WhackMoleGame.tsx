@@ -301,13 +301,14 @@ export const WhackMoleGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
         occupied.add(hole);
         const r = Math.random();
         const kind: MoleKind = r < 0.08 ? 'bomb' : r < 0.18 ? 'golden' : 'normal';
+        const word = pickWord();
         // 窗口期：base 4s，连击每 +1 缩 0.15s，最低 1.2s（越打越快！）
         const dur = Math.max(MIN_WINDOW * timeMul, (BASE_WINDOW - g.combo * COMBO_STEP) * timeMul);
         g.moles.push({
           id: ++idSeq.current,
           seq: idSeq.current,
           hole,
-          item: pickWord(),
+          item: word,
           typed: '',
           spawnAt: now,
           duration: kind === 'bomb' ? Math.min(dur, 2400) : dur, // 炸弹是快引线
@@ -315,6 +316,8 @@ export const WhackMoleGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           state: 'up',
         });
         playSoundEffect(kind === 'golden' ? 'bell' : 'bubble', 0.14);
+        // 语音"出现即读"：只有这只地鼠是当前唯一在场的才读，疾风双鼠只读先出现的，避免语音重叠
+        if (alive.length === 0 && kind !== 'bomb') speakGameWord(word);
       }
       // 生成节奏：连击越高越快
       g.nextSpawnAt = now + (g.frenzy ? 1100 : Math.max(650, 1500 - g.combo * 70)) * timeMul;
@@ -350,7 +353,6 @@ export const WhackMoleGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
       if (g.over || mole.state !== 'up') return;
       mole.state = 'hit';
       const golden = mole.kind === 'golden';
-      speakGameWord(mole.item); // 砸中后语音朗读单词
       const gained = (25 + g.combo * 5) * (golden ? 2 : 1);
       g.score += gained;
       g.hits += 1;

@@ -243,9 +243,9 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
     setCombo(0);
     setTyped('');
     setBanner('🕳️ 哎呀掉进坑洞啦！滚回山脚重新出发');
-    // 逐阶 waypoints：沿山坡台阶往下滚，不再直线飘（杜绝"往天空方向滚"）
+    // 逐阶 waypoints：沿山坡台阶往下滚；28ms/阶 + 线性过渡 = 连续滚落（提速300%，不再闪现）
     const startStep = Math.max(0, stepsDone - 1);
-    const STEP_MS = 85;
+    const STEP_MS = 28;
     for (let s = startStep; s >= -1; s--) {
       const p = posOf(s);
       t((startStep - s) * STEP_MS, () => {
@@ -326,6 +326,7 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
         @keyframes microQuakeB { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-2px, 3px); } 55% { transform: translate(2px, 1px); } 80% { transform: translate(-1px, -1px); } }
         @keyframes idleBounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.03); } }
         @keyframes fallSpin { 0% { transform: rotate(0deg) scale(1); } 100% { transform: rotate(-560deg) scale(0.55); opacity: 0.6; } }
+        @keyframes monkeyIdle { 0%,100% { transform: rotate(-3deg) translateY(0); } 30% { transform: rotate(4deg) translateY(-3px); } 60% { transform: rotate(-2deg) translateY(0); } }
         @keyframes fallRoll { 0% { transform: rotate(-24deg) translateY(0); } 50% { transform: rotate(16deg) translateY(-5px); } 100% { transform: rotate(-24deg) translateY(0); } }
         @keyframes mistDrift { 0%, 100% { transform: translateX(-26px); } 50% { transform: translateX(26px); } }
         @keyframes snowFall { 0% { transform: translateY(-16px) translateX(0) rotate(0deg); } 50% { transform: translateY(220px) translateX(18px) rotate(180deg); } 100% { transform: translateY(460px) translateX(-10px) rotate(360deg); } }
@@ -336,7 +337,7 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
 
       <GameHeader emoji="⛰️" title="登山小勇士" tag="无失败·登顶挑战" tagColor="bg-[#E5F6EC] text-[#48A757] border-[#C8EED4]">
         <ScorePill icon="⛰️" label="海拔" value={`${altMeters}米`} color="bg-[#E5F6EC] text-[#357F43] border-[#C8EED4]" />
-        <ScorePill icon="🧗" label="步数" value={`${stepsDone}/${TOTAL_STEPS}`} />
+        <ScorePill icon="🐒" label="步数" value={`${stepsDone}/${TOTAL_STEPS}`} />
         <ScorePill icon="⏱" label="用时" value={`${elapsedSec}s`} />
         <ComboFlame combo={combo} />
         {goat && <ScorePill icon="🐐" label="山羊冲刺" value="×1.5" color="bg-[#FFF3D6] text-[#B8860B] border-[#FFE3A3] animate-wiggle" />}
@@ -461,10 +462,11 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
               left: fallPos ? fallPos.x : climberLeft,
               top: fallPos ? fallPos.y : climberTop,
               transform: 'translate(-50%, -62%)',
+              transition: fallPos ? 'left 60ms linear, top 60ms linear' : undefined,
             }}
           >
             {fallPos ? (
-              <div style={{ animation: 'fallRoll 0.26s ease-in-out infinite' }}>
+              <div style={{ animation: 'fallRoll 0.14s ease-in-out infinite' }}>
                 <MountainHat />
                 <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>😵</span>
                 <span className="absolute -top-4 -right-3 text-lg animate-twinkle select-none">⭐</span>
@@ -478,13 +480,13 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             ) : climbing ? (
               <div style={{ animation: `heroJump ${climbing.dur}ms linear forwards`, '--dx': `${climbing.dx}px`, '--dy': `${climbing.dy}px`, '--arc': `${climbing.arc}px` } as React.CSSProperties}>
                 <MountainHat />
-                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🧗</span>
+                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🐒</span>
                 {climbing.rush && <span className="absolute -left-6 top-3 text-base select-none">💨</span>}
               </div>
             ) : (
-              <div className={`relative ${summit ? 'animate-breathe' : ''}`} style={{ animation: summit ? undefined : 'idleBounce 1.8s ease-in-out infinite' }}>
+              <div className={`relative ${summit ? 'animate-breathe' : ''}`} style={{ animation: summit ? undefined : 'monkeyIdle 1.4s ease-in-out infinite' }}>
                 <MountainHat />
-                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🧗</span>
+                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🐒</span>
               </div>
             )}
             {/* 营地烤火：爱心回血动画 */}
@@ -523,7 +525,7 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             <div className="absolute inset-0 rounded-full border-2 border-white/80 shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
               style={{ background: 'linear-gradient(0deg, #6BCB77 0%, #6BCB77 25%, #EDF3EC 25%, #EDF3EC 50%, #B9CBE0 50%, #B9CBE0 75%, #1B2E66 75%, #1B2E66 100%)' }} />
             <div className="absolute -left-4 transition-all duration-500" style={{ bottom: `calc(${altFrac * 100}% - 9px)` }}>
-              <span className="text-base select-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>🧗</span>
+              <span className="text-base select-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>🐒</span>
             </div>
             <span className="absolute -top-6 -left-3 text-[10px] font-black text-[#5B4636] bg-white/85 rounded-full px-1.5 select-none">8848</span>
           </div>
@@ -542,7 +544,7 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 rounded-2xl border-3 px-6 py-2.5 shadow-[0_4px_0_rgba(0,0,0,0.15)] flex items-center gap-2 ${
               fallActive ? 'bg-[#FFE3E3] border-[#E0633A]' : 'bg-white/90 border-[#A57DE0]'
             }`}>
-              <span className="text-2xl animate-wiggle">{fallActive ? '😵' : '🧗'}</span>
+              <span className="text-2xl animate-wiggle">{fallActive ? '😵' : '🐒'}</span>
               <span className="font-black text-[#5B4636] font-kids">
                 {fallActive ? '哎呀！掉进坑洞…' : summit ? '插旗庆祝中…' : climbing?.rush ? '山羊冲刺！跳得飞快！' : '蓄力 — 超级跳跃！'}
               </span>

@@ -219,7 +219,7 @@ export const GameHub: React.FC<GameHubProps> = ({ customWordList, customTitle, o
                   <span className="self-start mt-1 text-[10px] font-black text-[#8A6F5C] bg-[#FFF8EE] border-2 border-[#FFE8C8] px-2 py-0.5 rounded-full">{card.tag}</span>
                 </div>
               </div>
-              <p className="text-[15px] md:text-[16px] text-[#8A6F5C] font-bold leading-snug">{card.desc}</p>
+              <p className="text-[15px] md:text-[16px] text-[#8A6F5C] font-bold leading-snug line-clamp-2 min-h-[44px]">{card.desc}</p>
             </div>
             <button className={`btn-candy ${card.btnClass} w-full py-2.5 text-xs`}>
               开始冒险 →

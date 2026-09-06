@@ -68,6 +68,7 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
   const [finished, setFinished] = useState(false);
   const [splashes, setSplashes] = useState<Splash[]>([]);
   const [stinkTick, setStinkTick] = useState(0);
+  const [catSick, setCatSick] = useState(false);   // 小猫闻到臭味：眼睛变XX + 绿脸
   const [catJumpTick, setCatJumpTick] = useState(0);
   const [basketTick, setBasketTick] = useState(0);
   const [rushTick, setRushTick] = useState(0);
@@ -207,6 +208,8 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
       fishRef.current = fishRef.current.filter(x => x.id !== f.id);
       if (isJunk) {
         setStinkTick(k => k + 1);
+        setCatSick(true);
+        t(2200, () => setCatSick(false));
         playSoundEffect('frog_splash', 0.3);
         addScore(catLeft + 40, 240, f.kind === 'trash' ? '垃圾好臭! 🤢' : '好臭呀! 🤢', '#7A9A3A');
       } else {
@@ -374,6 +377,9 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
         @keyframes catJump { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-22px) scale(1.12) rotate(-6deg); } 70% { transform: translateY(1px) scale(0.96); } 100% { transform: translateY(0) scale(1); } }
         @keyframes basketPop { 0% { transform: scale(1); } 45% { transform: scale(1.2) rotate(4deg); } 100% { transform: scale(1); } }
         @keyframes stinkPuff { 0% { opacity: 0; transform: scale(0.4) translateY(0); } 25% { opacity: 0.9; } 100% { opacity: 0; transform: scale(1.6) translateY(-46px); } }
+        @keyframes stinkSpin { 0% { opacity: 0; transform: scale(0.3) rotate(0deg) translateY(0); } 30% { opacity: 0.95; } 100% { opacity: 0; transform: scale(1.9) rotate(300deg) translateY(-44px); } }
+        @keyframes stinkSpinRev { 0% { opacity: 0; transform: scale(0.3) rotate(0deg) translateY(0); } 30% { opacity: 0.9; } 100% { opacity: 0; transform: scale(1.7) rotate(-300deg) translateY(-38px); } }
+        @keyframes catGross { 0%,100% { transform: rotate(0deg) translateX(0); } 25% { transform: rotate(-7deg) translateX(-2px); } 75% { transform: rotate(7deg) translateX(2px); } }
         @keyframes flyBuzz { 0% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(7px,-6px) rotate(12deg); } 50% { transform: translate(12px,3px) rotate(-8deg); } 75% { transform: translate(4px,8px) rotate(10deg); } 100% { transform: translate(0,0) rotate(0deg); } }
         @keyframes bobberBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
       `}</style>
@@ -441,10 +447,17 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
             <span key={i} className={`absolute bottom-1 select-none animate-sway ${w.s}`} style={{ left: w.x, animationDuration: `${3 + i * 0.8}s` }}>🌿</span>
           ))}
 
-          {/* ---------- 猫咪 + 鱼竿 + 鱼线 ---------- */}
+          {/* ---------- 猫咪 + 鱼竿 + 鱼线（闻到臭味时眼睛变XX + 嫌弃扭头） ---------- */}
           <div className="absolute z-20" style={{ left: catLeft, top: CAT_TOP }}>
-            <div key={catJumpTick} style={{ animation: catJumpTick > 0 ? 'catJump 0.55s ease-out' : undefined }}>
-              <span className="block text-5xl select-none">🐱</span>
+            <div key={catJumpTick} className="relative" style={{ animation: catJumpTick > 0 ? 'catJump 0.55s ease-out' : catSick ? 'catGross 0.5s ease-in-out infinite' : undefined }}>
+              <span className="block text-5xl select-none" style={catSick ? { filter: 'hue-rotate(60deg) saturate(1.6) brightness(1.05)' } : undefined}>🐱</span>
+              {catSick && (
+                <>
+                  <span className="absolute top-[9px] left-[9px] text-[15px] font-black leading-none select-none" style={{ color: '#3F3F46', textShadow: '0 0 3px #fff' }}>✕</span>
+                  <span className="absolute top-[9px] left-[26px] text-[15px] font-black leading-none select-none" style={{ color: '#3F3F46', textShadow: '0 0 3px #fff' }}>✕</span>
+                  <span className="absolute -top-4 -right-3 text-base select-none">😖</span>
+                </>
+              )}
             </div>
           </div>
           {/* 鱼竿 */}
@@ -521,19 +534,17 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
                 </span>
               ))}
             </div>
-            {/* 臭臭特效：绿烟 + 苍蝇 + 嫌弃表情（钓到靴子/垃圾时触发） */}
+            {/* 臭臭特效：紫色旋转扩散臭烟（钓到靴子/垃圾时触发） */}
             {stinkTick > 0 && (
-              <div key={stinkTick} className="absolute -top-10 -left-6 pointer-events-none w-[150px]">
-                {/* 绿色臭气团（三层错落） */}
-                <span className="absolute text-2xl" style={{ animation: 'stinkPuff 1.3s ease-out forwards' }}>🟢</span>
-                <span className="absolute left-8 -top-2 text-xl opacity-80" style={{ animation: 'stinkPuff 1.3s ease-out 0.15s forwards' }}>💚</span>
-                <span className="absolute left-16 text-2xl opacity-70" style={{ animation: 'stinkPuff 1.3s ease-out 0.3s forwards' }}>🟢</span>
-                <span className="absolute left-4 top-3 text-lg" style={{ animation: 'stinkPuff 1.3s ease-out 0.45s forwards' }}>💨</span>
+              <div key={stinkTick} className="absolute -top-12 -left-8 pointer-events-none w-[150px] h-[120px]">
+                {/* 三层紫烟：扩散 + 旋转（正反交替），臭味盘旋而上 */}
+                <span className="absolute left-8 top-6 w-10 h-10 rounded-[45%] blur-[3px]" style={{ background: 'rgba(167,125,224,0.55)', animation: 'stinkSpin 1.4s ease-out forwards' }} />
+                <span className="absolute left-2 top-10 w-8 h-8 rounded-[45%] blur-[3px]" style={{ background: 'rgba(147,102,214,0.5)', animation: 'stinkSpinRev 1.5s ease-out 0.12s forwards' }} />
+                <span className="absolute left-16 top-2 w-9 h-9 rounded-[45%] blur-[3px]" style={{ background: 'rgba(196,155,255,0.5)', animation: 'stinkSpin 1.6s ease-out 0.24s forwards' }} />
+                <span className="absolute left-10 top-0 w-6 h-6 rounded-full blur-[2px]" style={{ background: 'rgba(196,155,255,0.45)', animation: 'stinkSpinRev 1.4s ease-out 0.4s forwards' }} />
                 {/* 苍蝇嗡嗡绕圈 */}
-                <span className="absolute left-2 -top-3 text-sm" style={{ animation: 'flyBuzz 0.9s ease-in-out infinite' }}>🪰</span>
-                <span className="absolute left-12 top-4 text-xs" style={{ animation: 'flyBuzz 0.7s ease-in-out 0.2s infinite' }}>🪰</span>
-                {/* 小猫嫌弃：绿脸 + 波泡 */}
-                <span className="absolute left-[74px] -top-7 text-xl" style={{ animation: 'stinkPuff 1.4s ease-out 0.25s forwards' }}>🤢</span>
+                <span className="absolute left-4 top-6 text-sm" style={{ animation: 'flyBuzz 0.9s ease-in-out infinite' }}>🪰</span>
+                <span className="absolute left-16 top-9 text-xs" style={{ animation: 'flyBuzz 0.7s ease-in-out 0.2s infinite' }}>🪰</span>
               </div>
             )}
           </div>
@@ -547,8 +558,8 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
 
           {/* ---------- 旧靴警示 ---------- */}
           {junkOnField && (
-            <div className="absolute bottom-[74px] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-              <span className="bg-[#FFF3D6] text-[#B8860B] font-black text-xs px-3 py-1 rounded-full border-2 border-[#FFE3A3] animate-wiggle">🥾🗑️ 别钓靴子和垃圾，小猫会嫌臭！</span>
+            <div className="absolute top-2 right-3 z-30 pointer-events-none">
+              <span className="bg-[#FFF3D6] text-[#B8860B] font-black text-xs px-3 py-1 rounded-full border-2 border-[#FFE3A3] animate-wiggle">🥾🗑️ 别钓靴子和垃圾！</span>
             </div>
           )}
 

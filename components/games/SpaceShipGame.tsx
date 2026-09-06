@@ -395,7 +395,9 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
     <div ref={wrapRef} className="flex flex-col gap-3 w-full max-w-5xl mx-auto animate-fade-in">
       <style>{`
         @keyframes fragFly { from { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) rotate(220deg) scale(0.25); opacity: 0; } }
-        @keyframes laserShot { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes laserShot { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes starDrift { 0% { transform: translate(0,-40px); } 100% { transform: translate(0,620px); } }
+        @keyframes shipIdle { 0%,100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(1.5px,-1px) rotate(1deg); } 50% { transform: translate(-1.5px,1px) rotate(-1deg); } 75% { transform: translate(1px,1.5px) rotate(0.5deg); } }
         @keyframes warpStreak { from { transform: translateY(-90px); } to { transform: translateY(650px); } }
         @keyframes starFall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 88% { opacity: 1; } 100% { transform: translateY(600px) rotate(420deg); opacity: 0; } }
         @keyframes redFlash { from { opacity: 0.6; } to { opacity: 0; } }
@@ -423,10 +425,11 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           <div className="absolute w-48 h-48 rounded-full blur-3xl opacity-15" style={{ background: 'radial-gradient(circle, #FF8FAB, transparent 70%)', left: '34%', bottom: '4%' }} />
         </div>
 
-        {/* 三层星星视差（曲速时变拉丝） */}
+        {/* 星空向下漂移 = 飞船前进感（负延迟打散相位，曲速时变拉丝） */}
         {!warp && stars.map((s, i) => (
-          <span key={i} className="absolute rounded-full bg-white animate-twinkle pointer-events-none"
-            style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size, animationDuration: `${s.dur}s`, animationDelay: `${s.delay}s`, opacity: 0.45 + s.size / 14 }} />
+          <span key={i} className="absolute rounded-full bg-white pointer-events-none"
+            style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size, opacity: 0.35 + s.size / 12,
+              animation: `starDrift ${(5.5 + s.size * 0.9).toFixed(1)}s linear infinite`, animationDelay: `-${s.delay}s` }} />
         ))}
         {warp && (
           <>
@@ -507,9 +510,9 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           );
         })}
 
-        {/* 飞船（底部中央 + 引擎喷焰） */}
+        {/* 飞船（底部中央 + 引擎喷焰 + 怠速微震） */}
         <div className="absolute left-1/2 z-20" style={{ bottom: 76, transform: 'translateX(-50%)' }}>
-          <div className="relative">
+          <div className="relative" style={{ animation: 'shipIdle 0.5s ease-in-out infinite' }}>
             <div className="absolute left-1/2 -translate-x-1/2 w-3 h-7 rounded-full pointer-events-none"
               style={{ bottom: -4, background: 'linear-gradient(to top, rgba(255,138,92,0), #FF8A5C 60%, #FFD166)', filter: 'blur(1px)', animation: 'nitroFlame 0.18s infinite ease-in-out' }} />
             <div className="absolute left-1/2 -translate-x-1/2 w-1.5 h-10 rounded-full pointer-events-none"
@@ -518,14 +521,23 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           </div>
         </div>
 
-        {/* 激光束（青色渐变 + 白芯 + glow） */}
-        {laser && (
-          <div key={laser.id} className="absolute z-30 pointer-events-none"
-            style={{ left: `${laser.x}%`, top: laser.toY, width: 8, height: Math.max(4, laser.fromY - laser.toY), marginLeft: -4, transformOrigin: 'bottom', animation: 'laserShot 0.14s ease-out' }}>
-            <div className="w-full h-full rounded-full" style={{ background: 'linear-gradient(180deg, rgba(125,211,252,0.95), rgba(59,130,246,0.85))', boxShadow: '0 0 14px 4px rgba(56,189,248,0.65)' }} />
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2.5px] bg-white rounded-full" style={{ boxShadow: '0 0 8px #fff' }} />
-          </div>
-        )}
+        {/* 激光束：从飞船炮口斜射向陨石（青色渐变 + 白芯 + glow） */}
+        {laser && (() => {
+          const shipXpx = boardW / 2;
+          const tx = (laser.x / 100) * boardW;
+          const len = Math.max(20, Math.hypot(tx - shipXpx, laser.toY - SHIP_NOSE));
+          const ang = (Math.atan2(laser.toY - SHIP_NOSE, tx - shipXpx) * 180) / Math.PI;
+          return (
+            <div key={laser.id} className="absolute z-30 pointer-events-none origin-left"
+              style={{ left: shipXpx, top: SHIP_NOSE, width: len, transform: `rotate(${ang}deg)` }}>
+              <div className="h-2 w-full rounded-full" style={{ background: 'linear-gradient(90deg, rgba(125,211,252,0.95), rgba(59,130,246,0.85))', boxShadow: '0 0 14px 4px rgba(56,189,248,0.65)', transformOrigin: 'left', animation: 'laserShot 0.14s ease-out' }}>
+                <div className="absolute inset-y-0 left-0 w-full flex items-center">
+                  <div className="h-[2.5px] w-full bg-white rounded-full" style={{ boxShadow: '0 0 8px #fff' }} />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* 爆炸（橙色碎片 + 冲击环） */}
         {explosions.map(ex => (

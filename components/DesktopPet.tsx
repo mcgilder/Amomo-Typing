@@ -706,12 +706,52 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
             ))}
           </div>
 
-          {/* Tab 1: 互动道具（道具网格移到下方整页宽度区域，两行铺满） */}
+          {/* Tab 1: 互动道具（右栏 3 列横卡，参照定稿截图） */}
           {activeTab === 'TOOLS' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-2 py-6">
-              <span className="text-4xl animate-float-y select-none">🎁</span>
-              <p className="text-sm font-black text-[#5B4636] font-kids">挑一个道具陪我玩吧！</p>
-              <p className="text-xs text-[#8A6F5C] font-bold">道具清单在下方 👇 每次使用我都会做超可爱的动作哦～</p>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {(['all', 'food', 'toy', 'care', 'sleep'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setToolFilter(f)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
+                      toolFilter === f ? 'bg-[#5B4636] text-white' : 'bg-[#FFF8EE] text-[#8A6F5C] border-2 border-[#FFE8C8] hover:bg-white'
+                    }`}
+                  >
+                    {f === 'all' ? '🎁 全部' : `${CATEGORY_META[f].icon} ${CATEGORY_META[f].label}`}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {filteredTools.map(tool => (
+                  <div
+                    key={tool.id}
+                    className="p-2.5 rounded-2xl border-3 border-[#FFE8C8] bg-[#FFF8EE]/60 hover:bg-white hover:border-[#FFC94D] hover:shadow-[0_4px_0_rgba(222,184,135,0.3)] transition-all flex items-center gap-2.5"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white border-3 border-[#FFE8C8] flex items-center justify-center text-2xl shrink-0 select-none">
+                      {tool.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-black text-[15px] text-[#5B4636]">{tool.name}</span>
+                        {tool.hungerAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9E0] text-[#E0633A] px-1.5 rounded">饱食{tool.hungerAdd > 0 ? '+' : ''}{tool.hungerAdd}</span>}
+                        {tool.happyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9F0] text-[#E0678A] px-1.5 rounded">开心+{tool.happyAdd}</span>}
+                        {tool.cleanAdd !== 0 && <span className="text-[10px] font-bold bg-[#E3F2FA] text-[#2E93C4] px-1.5 rounded">清洁+{tool.cleanAdd}</span>}
+                        {tool.energyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFF3D6] text-[#8A5F00] px-1.5 rounded">精力{tool.energyAdd > 0 ? '+' : ''}{tool.energyAdd}</span>}
+                      </div>
+                      <span className="text-[13px] text-[#8A6F5C] font-bold leading-snug line-clamp-2">{tool.desc}</span>
+                    </div>
+                    <button
+                      onClick={() => handleUseTool(tool)}
+                      className="btn-candy btn-grass w-12 h-12 rounded-full shrink-0 flex flex-col items-center justify-center leading-none text-[11px] font-black transition-transform active:scale-90"
+                      title="使用道具"
+                    >
+                      <span className="text-[13px]">🪙</span>
+                      <span className="mt-0.5">{tool.cost}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -855,52 +895,6 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
           )}
         </div>
       </div>
-
-      {/* 互动道具区：整页宽度两行铺满（横排卡片：图标居左、介绍加大、高度更矮） */}
-      {activeTab === 'TOOLS' && (
-        <div className="story-card p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base font-black text-[#5B4636] font-kids flex items-center gap-1.5">🎁 互动道具</span>
-            {(['all', 'food', 'toy', 'care', 'sleep'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setToolFilter(f)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
-                  toolFilter === f ? 'bg-[#5B4636] text-white' : 'bg-[#FFF8EE] text-[#8A6F5C] border-2 border-[#FFE8C8] hover:bg-white'
-                }`}
-              >
-                {f === 'all' ? '全部' : `${CATEGORY_META[f].icon} ${CATEGORY_META[f].label}`}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {filteredTools.map(tool => (
-              <div
-                key={tool.id}
-                className="p-2.5 rounded-2xl border-3 border-[#FFE8C8] bg-[#FFF8EE]/60 hover:bg-white hover:border-[#FFC94D] hover:shadow-[0_4px_0_rgba(222,184,135,0.3)] transition-all flex items-center gap-3 text-left"
-              >
-                <span className="text-4xl shrink-0 select-none">{tool.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-black text-[#5B4636] text-sm">{tool.name}</span>
-                    {tool.hungerAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9E0] text-[#E0633A] px-1.5 rounded">饱食{tool.hungerAdd > 0 ? '+' : ''}{tool.hungerAdd}</span>}
-                    {tool.happyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFE9F0] text-[#E0678A] px-1.5 rounded">开心+{tool.happyAdd}</span>}
-                    {tool.cleanAdd !== 0 && <span className="text-[10px] font-bold bg-[#E3F2FA] text-[#2E93C4] px-1.5 rounded">清洁+{tool.cleanAdd}</span>}
-                    {tool.energyAdd !== 0 && <span className="text-[10px] font-bold bg-[#FFF3D6] text-[#8A5F00] px-1.5 rounded">精力{tool.energyAdd > 0 ? '+' : ''}{tool.energyAdd}</span>}
-                  </div>
-                  <span className="text-[15px] text-[#8A6F5C] font-bold leading-snug line-clamp-2">{tool.desc}</span>
-                </div>
-                <button
-                  onClick={() => handleUseTool(tool)}
-                  className="btn-candy btn-grass px-3 py-2.5 text-xs shrink-0 whitespace-nowrap"
-                >
-                  🪙 {tool.cost}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

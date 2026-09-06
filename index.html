@@ -234,20 +234,21 @@
             /* 1080 屏最大化浏览器窗口（视口约 965px） */
             main[data-active-tab="PET"]   { zoom: 0.85; }
             main[data-active-tab="STORY"] { zoom: 0.91; }
-            main[data-active-tab="HABIT"] { zoom: 0.80; }
+            main[data-active-tab="HABIT"] { zoom: 0.75; }
         }
         /* 好习惯·家长设置视图比常规视图更高：各档单独缩放（孩子常规视图不受影响） */
         @media (min-height: 1021px) {
-            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.84; }
+            main[data-active-tab="HABIT"] { zoom: 0.84; }
+            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.70; }
         }
         @media (min-height: 821px) and (max-height: 1020px) {
-            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.74; }
+            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.68; }
         }
         @media (min-height: 701px) and (max-height: 820px) {
-            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.58; }
+            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.52; }
         }
         @media (max-height: 700px) {
-            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.53; }
+            main[data-active-tab="HABIT"][data-parent-mode="1"] { zoom: 0.48; }
         }
         @media (min-height: 701px) and (max-height: 820px) {
             /* 1366×768 全屏视口档 */
@@ -255,7 +256,7 @@
             main[data-active-tab="GAME"]     { zoom: 0.93; }
             main[data-active-tab="STORY"]    { zoom: 0.76; }
             main[data-active-tab="PET"]      { zoom: 0.71; }
-            main[data-active-tab="HABIT"]    { zoom: 0.69; }
+            main[data-active-tab="HABIT"]    { zoom: 0.58; }
             main[data-active-tab="STATS"]    { zoom: 0.84; }
         }
         @media (max-height: 700px) {
@@ -264,7 +265,7 @@
             main[data-active-tab="GAME"]     { zoom: 0.84; }
             main[data-active-tab="STORY"]    { zoom: 0.70; }
             main[data-active-tab="PET"]      { zoom: 0.65; }
-            main[data-active-tab="HABIT"]    { zoom: 0.60; }
+            main[data-active-tab="HABIT"]    { zoom: 0.52; }
             main[data-active-tab="STATS"]    { zoom: 0.77; }
         }
 

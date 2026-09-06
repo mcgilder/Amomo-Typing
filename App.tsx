@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Mode, Tab, TypingStats, ExerciseItem, PetItem, PetAccessory, PetTool, Achievement } from './types';
 import { TEXTBOOK_RESOURCES, KEYBOARD_LAYOUT } from './constants';
+import { EN_EXAMPLE_ZH } from './enExampleZh';
 import {
   speakDirect,
   prewarmSpeech,
@@ -800,11 +801,11 @@ export const App: React.FC = () => {
               </button>
             </div>
 
-            {/* 打字主区：行1=单词卡(8列)+信息卡(4列)，行2=键盘(8列)+统计(4列)
-                单词卡与键盘同列同宽 → 单词水平居中即与键盘的中线对齐 */}
+            {/* 打字主区：行1=全宽单词卡（左7列单词+音标+中文 / 右5列例句+例句中文+空格提示）
+                行2=键盘(8列)+统计(4列)；单词水平居中即与键盘的中线对齐 */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
-              {/* 行1-左：目标单词卡 */}
-              <div className="lg:col-span-8 story-card px-5 md:px-8 py-4 md:py-5 flex flex-col items-center justify-center relative overflow-hidden min-h-[228px]">
+              {/* 行1：目标单词卡（全宽） */}
+              <div className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden min-h-[228px]">
                 {/* 进度条 */}
                 <div className="absolute top-0 left-0 h-2.5 bg-gradient-to-r from-[#FF8A5C] via-[#FFC94D] to-[#6BCB77] rounded-r-full transition-all duration-300" style={{ width: `${progress}%` }} />
 
@@ -830,7 +831,9 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex-1 flex flex-col items-center justify-center pt-6">
+                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-6">
+                   {/* 左 7/12：单词 + 音标 + 中文与朗读（参照定稿排布） */}
+                   <div className="md:col-span-7 flex flex-col items-center justify-center gap-1.5">
                     {/* Chinese PinYin Mode */}
                     {mode === Mode.CHINESE ? (
                       <>
@@ -867,12 +870,13 @@ export const App: React.FC = () => {
                           })()}
                         </div>
 
-                        {/* 例句与打字内容同框展示（紧随拼音行下方） */}
-                        {exerciseList[currentIndex]?.example && (
-                          <p className="mt-2 text-2xl md:text-3xl text-[#48A757] font-black font-kids text-center leading-snug select-none">
-                            {exerciseList[currentIndex]?.example}
-                          </p>
-                        )}
+                        {/* 朗读按钮（语文模式：读单词读音） */}
+                        <button
+                          onClick={() => readCurrentItem(exerciseList[currentIndex])}
+                          className="mt-1.5 text-xs bg-[#E5F6EC] hover:bg-[#C8EED4] text-[#357F43] px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 border-2 border-[#C8EED4]"
+                        >
+                          <span>🔊 点击朗读读音</span>
+                        </button>
                       </>
                     ) : (
                       /* English Mode with Syllable Colors（单词与键盘同列居中，音标与例句在内容下方） */
@@ -935,31 +939,12 @@ export const App: React.FC = () => {
                             {exerciseList[currentIndex]?.phonetic}
                           </span>
                         )}
-                        {exerciseList[currentIndex]?.example && (
-                          <p className="mt-1 text-2xl md:text-3xl text-[#48A757] font-black italic font-kids text-center leading-snug select-none">
-                            {exerciseList[currentIndex]?.example}
-                          </p>
-                        )}
                       </div>
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
-
-              {/* 行1-右：翻译信息卡（例句已并入左侧打字卡） */}
-              <div className="lg:col-span-4 story-card px-4 py-4 flex flex-col items-center justify-center gap-2.5 text-center min-h-[150px] lg:min-h-0">
-                {!isStarted ? (
-                  <div className="flex flex-col items-center gap-2 text-[#8A6F5C]">
-                    <span className="text-4xl animate-breathe select-none">👆</span>
-                    <p className="text-xs font-bold leading-relaxed">
-                      点击「开始练习」<br />跟着键盘高亮提示敲字母
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2.5 w-full">
+                    {/* 英语模式：中文翻译 + 单词发音按钮（音标下方，参照定稿排布） */}
                     {mode === Mode.ENGLISH && (
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 mt-1">
                         <span className="text-2xl md:text-3xl font-black text-[#2E93C4] font-kids">
                           {exerciseList[currentIndex]?.translation}
                         </span>
@@ -972,19 +957,25 @@ export const App: React.FC = () => {
                         </button>
                       </div>
                     )}
-                    {mode === Mode.CHINESE && (
-                      <button
-                        onClick={() => readCurrentItem(exerciseList[currentIndex])}
-                        className="text-xs bg-[#E5F6EC] hover:bg-[#C8EED4] text-[#357F43] px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 border-2 border-[#C8EED4]"
-                      >
-                        <span>🔊 点击朗读读音</span>
-                      </button>
+                   </div>
+                   {/* 右 5/12：例句（大字，比正文区加大30%）+ 例句中文 + 空格挑战提示 */}
+                   <div className="md:col-span-5 flex flex-col items-center justify-center gap-2.5 text-center px-1 md:px-3">
+                    {exerciseList[currentIndex]?.example && (
+                      <p className="text-3xl md:text-[38px] text-[#48A757] font-black italic font-kids leading-snug select-none">
+                        {exerciseList[currentIndex]?.example}
+                      </p>
+                    )}
+                    {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
+                      <p className="text-sm md:text-base text-[#8A6F5C] font-bold leading-snug">
+                        {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
+                      </p>
                     )}
                     {isWaitingForSpace && (
                       <div className="bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2">
                         <span>⌨️</span> 按下 [ 空格键 ] 挑战下一个
                       </div>
                     )}
+                   </div>
                   </div>
                 )}
               </div>

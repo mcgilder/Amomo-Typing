@@ -532,9 +532,10 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
                   {isMama && (
                     <span className="absolute -bottom-4 text-[9px] font-black text-white/75 whitespace-nowrap select-none">妈妈在这里</span>
                   )}
-                  {/* 荷叶上的单词（放大1.5倍：9px→13px；选中后顶部大字显示；当前荷叶由青蛙占位） */}
+                  {/* 荷叶上的单词：悬浮在荷叶正上方，26px 大字（不进荷叶内部、不截断） */}
                   {!isCurrent && (
-                    <span className={`font-mono font-black text-[13px] leading-none max-w-[70px] truncate px-0.5 ${wordColor}`}>
+                    <span className={`absolute -top-8 left-1/2 -translate-x-1/2 font-mono font-black text-[26px] leading-none whitespace-nowrap select-none ${wordColor}`}
+                      style={{ textShadow: '0 2px 3px rgba(0,0,0,0.35), 0 0 8px rgba(255,255,255,0.45)' }}>
                       {pad.item.typing.toLowerCase()}
                     </span>
                   )}
