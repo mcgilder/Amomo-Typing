@@ -224,6 +224,59 @@ export const App: React.FC = () => {
     return item.chinese || item.text;
   };
 
+  // ===== 打字区三层对齐：单词中心↔键盘G键、音标中线↔当前字母中线 =====
+  const wordCardRef = useRef<HTMLDivElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const wordRowRef = useRef<HTMLDivElement>(null);
+  const currentCharRef = useRef<HTMLDivElement | null>(null);
+  const phoneticRef = useRef<HTMLSpanElement>(null);
+  const [wordShift, setWordShift] = useState(0);      // 单词组整体水平偏移
+  const [phoneticShift, setPhoneticShift] = useState(0); // 音标相对左栏偏移
+
+  const measureAlign = useCallback(() => {
+    if (mode !== Mode.ENGLISH || !isStarted) { setWordShift(0); setPhoneticShift(0); return; }
+    const card = wordCardRef.current;
+    const left = leftColRef.current;
+    if (!card || !left) return;
+    const cardR = card.getBoundingClientRect();
+    const leftR = left.getBoundingClientRect();
+    // ① 单词（字符行）水平中心 → 键盘 G 键中心（定整个中心位置）
+    const g = document.querySelector('[data-key="G"]');
+    if (g && wordRowRef.current) {
+      const gR = g.getBoundingClientRect();
+      const gCenter = gR.left + gR.width / 2 - cardR.left;
+      const wR = wordRowRef.current.getBoundingClientRect();
+      const wCenter = wR.left + wR.width / 2 - cardR.left;
+      setWordShift(prev => prev + (gCenter - wCenter));
+    }
+    // ② 音标水平中线 → 当前待打字母的中线（无当前字母时回正居中）
+    const ch = currentCharRef.current;
+    const ph = phoneticRef.current;
+    if (ch && ph) {
+      const chR = ch.getBoundingClientRect();
+      const chCenter = chR.left + chR.width / 2 - leftR.left;
+      const phR = ph.getBoundingClientRect();
+      const phCenter = phR.left + phR.width / 2 - leftR.left;
+      setPhoneticShift(prev => prev + (chCenter - phCenter));
+    } else {
+      setPhoneticShift(0);
+    }
+  }, [mode, isStarted]);
+
+  // 换词/词表变化：先归零渲染自然布局，再在下一帧测量对齐（无过渡污染）
+  useEffect(() => { setWordShift(0); setPhoneticShift(0); }, [currentIndex, exerciseList]);
+  useEffect(() => {
+    // setTimeout 而非 rAF：后台/隐藏标签页 rAF 不执行会导致对齐冻结；提交后下一拍测量即可
+    const tid = window.setTimeout(() => measureAlign(), 0);
+    return () => clearTimeout(tid);
+  }, [measureAlign, inputBuffer, isWaitingForSpace, currentIndex, exerciseList]);
+  useEffect(() => {
+    window.addEventListener('resize', measureAlign);
+    const t1 = setTimeout(measureAlign, 400);
+    const t2 = setTimeout(measureAlign, 1200);   // 字体加载后再校一次
+    return () => { window.removeEventListener('resize', measureAlign); clearTimeout(t1); clearTimeout(t2); };
+  }, [measureAlign]);
+
   const handleStartStop = () => {
     if (!isStarted) {
       setIsStarted(true);
@@ -805,7 +858,7 @@ export const App: React.FC = () => {
                 行2=键盘(8列)+统计(4列)；单词水平居中即与键盘的中线对齐 */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
               {/* 行1：目标单词卡（全宽） */}
-              <div className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden min-h-[228px]">
+              <div ref={wordCardRef} className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden min-h-[228px]">
                 {/* 进度条 */}
                 <div className="absolute top-0 left-0 h-2.5 bg-gradient-to-r from-[#FF8A5C] via-[#FFC94D] to-[#6BCB77] rounded-r-full transition-all duration-300" style={{ width: `${progress}%` }} />
 
@@ -833,7 +886,9 @@ export const App: React.FC = () => {
                 ) : (
                   <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-6">
                    {/* 左 7/12：单词 + 音标 + 中文与朗读（参照定稿排布） */}
-                   <div className="md:col-span-7 flex flex-col items-center justify-center gap-1.5">
+                   <div ref={leftColRef}
+                     className="md:col-span-7 flex flex-col items-center justify-center gap-1.5"
+                     style={{ transform: 'translateX(' + wordShift + 'px)' }}>
                     {/* Chinese PinYin Mode */}
                     {mode === Mode.CHINESE ? (
                       <>
@@ -881,7 +936,7 @@ export const App: React.FC = () => {
                     ) : (
                       /* English Mode with Syllable Colors（单词与键盘同列居中，音标与例句在内容下方） */
                       <div className="flex flex-col items-center gap-1.5 w-full">
-                      <div className="flex flex-wrap justify-center items-end gap-x-2 gap-y-3">
+                      <div ref={wordRowRef} className="flex flex-wrap justify-center items-end gap-x-2 gap-y-3">
                         {(() => {
                           let charCounter = 0;
                           return currentSyllables.map((syllable, sIndex) => {
@@ -896,7 +951,7 @@ export const App: React.FC = () => {
 
                                   if (isSpace) {
                                     return (
-                                      <div key={cIndex} className="relative mx-2 flex flex-col items-center">
+                                      <div key={cIndex} ref={isCurrent && !isWaitingForSpace ? currentCharRef : undefined} className="relative mx-2 flex flex-col items-center">
                                         <div
                                           className={`px-3 py-1.5 rounded-xl border-2 border-dashed flex items-center justify-center font-mono font-bold text-sm md:text-base transition-all ${
                                             isTyped
@@ -916,7 +971,7 @@ export const App: React.FC = () => {
                                   }
 
                                   return (
-                                    <div key={cIndex} className="relative">
+                                    <div key={cIndex} ref={isCurrent && !isWaitingForSpace ? currentCharRef : undefined} className="relative">
                                       <span
                                         className={`text-6xl md:text-8xl font-black transition-all leading-none font-mono ${
                                           isTyped ? 'text-[#C4AE97]' : syllableColor
@@ -935,7 +990,9 @@ export const App: React.FC = () => {
                           });
                         })()}
                         {exerciseList[currentIndex]?.phonetic && (
-                          <span className="text-2xl md:text-3xl italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none">
+                          <span ref={phoneticRef}
+                            className="inline-block text-4xl md:text-[45px] italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none"
+                            style={{ transform: 'translateX(' + phoneticShift + 'px)' }}>
                             {exerciseList[currentIndex]?.phonetic}
                           </span>
                         )}
@@ -945,7 +1002,7 @@ export const App: React.FC = () => {
                     {/* 英语模式：中文翻译 + 单词发音按钮（音标下方，参照定稿排布） */}
                     {mode === Mode.ENGLISH && (
                       <div className="flex items-center gap-2.5 mt-1">
-                        <span className="text-4xl md:text-[45px] font-black text-[#2E93C4] font-kids leading-none">
+                        <span className="text-2xl md:text-[30px] font-black text-[#2E93C4] font-kids leading-none">
                           {exerciseList[currentIndex]?.translation}
                         </span>
                         <button
@@ -959,20 +1016,22 @@ export const App: React.FC = () => {
                     )}
                    </div>
                    {/* 右 5/12：例句（大字，比正文区加大30%）+ 例句中文 + 空格挑战提示 */}
-                   <div className="md:col-span-5 flex flex-col items-center justify-center gap-2.5 text-center px-1 md:px-3">
+                   <div className="md:col-span-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center px-1 md:px-3">
                     {exerciseList[currentIndex]?.example && (
-                      <p className="text-3xl md:text-[38px] text-[#48A757] font-black italic font-kids leading-snug select-none">
+                      <p className="text-5xl md:text-[57px] text-[#48A757] font-black italic font-kids leading-tight select-none">
                         {exerciseList[currentIndex]?.example}
                       </p>
                     )}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
-                      <p className="text-lg md:text-2xl text-[#8A6F5C] font-black font-kids leading-snug">
+                      <p className="text-2xl md:text-[30px] text-[#2E93C4] font-black font-kids leading-tight">
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
                       </p>
                     )}
                     {isWaitingForSpace && (
-                      <div className="bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2">
-                        <span>⌨️</span> 按下 [ 空格键 ] 挑战下一个
+                      <div className="basis-full flex justify-center">
+                        <div className="bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2">
+                          <span>⌨️</span> 按下 [ 空格键 ] 挑战下一个
+                        </div>
                       </div>
                     )}
                    </div>

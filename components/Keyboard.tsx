@@ -36,6 +36,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
             return (
               <div
                 key={key}
+                data-key={key}
                 className={`
                   relative w-11 h-10 md:w-14 md:h-12 flex items-center justify-center rounded-xl text-xl md:text-2xl font-bold border-b-[5px] transition-all duration-150
                   ${isTarget ? `${colors.active} scale-110 shadow-lg z-10 text-white -translate-y-1 animate-pulse` : `${colors.bg} ${colors.text} ${colors.border} hover:brightness-97`}

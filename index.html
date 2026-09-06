@@ -414,6 +414,8 @@
             animation: borderFlowGlow 1.8s linear infinite;
             border-radius: 6px;
         }
+        @keyframes brushStroke { 0% { transform: translate(-58px, 0) rotate(-16deg); } 50% { transform: translate(58px, 8px) rotate(16deg); } 100% { transform: translate(-58px, 0) rotate(-16deg); } }
+        @keyframes furFall { 0% { opacity: 0; transform: translateY(0) rotate(0deg); } 25% { opacity: 0.95; } 100% { opacity: 0; transform: translateY(96px) rotate(170deg); } }
         /* 两行截断回退（CDN Tailwind 未生成 line-clamp 时兜底，萌宠道具卡高度依赖它） */
         .line-clamp-2 {
             display: -webkit-box;

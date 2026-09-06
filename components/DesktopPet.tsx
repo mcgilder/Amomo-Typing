@@ -255,9 +255,9 @@ export const PET_TOOLS: PetTool[] = [
     desc: '泡泡浴里打个滚，甩甩水珠香喷喷'
   },
   {
-    id: 'brush', name: '柔软梳毛刷', emoji: '🪮', category: 'care', cost: 5,
+    id: 'brush', name: '柔软梳毛刷', emoji: '🖌️', category: 'care', cost: 5,
     hungerAdd: 0, happyAdd: 15, cleanAdd: 20, energyAdd: 3,
-    animClass: 'animate-pet-brush', particles: '🪮 💖 ✨',
+    animClass: 'animate-pet-brush', particles: '🖌️ 💖 ✨',
     desc: '被梳得全身软乎乎'
   },
   // —— 休息（精力） ——
@@ -528,12 +528,21 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
                   {i % 2 ? '🫧' : '💧'}
                 </span>
               ))}
-              {flyingItem.id === 'brush' && [0, 1, 2].map(i => (
-                <span key={i} className="absolute text-2xl animate-heart-pop select-none"
-                  style={{ left: `${36 + i * 14}%`, top: '42%', animationDelay: `${i * 0.32}s` }}>
-                  💖
-                </span>
-              ))}
+              {flyingItem.id === 'brush' && (
+                <>
+                  {/* 梳毛：刷子贴着猫背左右梳动 */}
+                  <span className="absolute text-3xl select-none"
+                    style={{ top: '46%', left: '50%', animation: 'brushStroke 1.1s ease-in-out 2' }}>
+                    🖌️
+                  </span>
+                  {/* 梳下来的毛絮飘飘落地 */}
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <span key={i} className="absolute w-2 h-2 rounded-full"
+                      style={{ left: `${32 + i * 9}%`, top: '52%', background: i % 2 ? '#E8D9C4' : '#F3E7D3',
+                        animation: `furFall 1.2s ease-in ${(i * 0.14).toFixed(2)}s forwards` }} />
+                  ))}
+                </>
+              )}
               {flyingItem.id === 'musicbox' && ['🎵', '🎶', '🎵', '🎶', '🎵', '🎶'].map((e, i) => (
                 <span key={i} className="absolute text-xl animate-float-score select-none"
                   style={{ left: `${26 + i * 10}%`, top: `${34 + (i % 2) * 14}%`, animationDelay: `${i * 0.2}s` }}>
@@ -616,15 +625,24 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
                   </div>
                 )}
 
-                {/* 墨镜：CSS 镜片盖住眼睛（无镜腿，直接架在脸上） */}
+                {/* 墨镜：加大酷帅盾形镜片，完全盖住双眼（架在脸上无镜腿） */}
                 {currentAccessory && currentAccessory.type === 'glasses' && (
-                  <div className="absolute top-[54px] left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center">
-                    <div className="w-[36px] h-[21px] rounded-[10px] bg-[#161D2B] border-2 border-[#0A0F18] overflow-hidden relative">
-                      <div className="absolute top-[4px] left-[5px] w-[13px] h-[4px] rounded-full bg-white/40 rotate-[-15deg]" />
+                  <div className="absolute top-[58px] left-1/2 z-20 pointer-events-none flex items-center" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.35))', transform: 'translateX(-50%) rotate(-2deg)' }}>
+                    <div className="relative w-[52px] h-[30px] overflow-hidden"
+                      style={{ background: 'linear-gradient(160deg, #3A4A66 0%, #161D2B 45%, #060A12 100%)', borderRadius: '14px 20px 22px 20px / 16px 18px 22px 18px', border: '2.5px solid #0A0F18' }}>
+                      {/* 蓝紫反光 */}
+                      <div className="absolute inset-x-1 top-[3px] h-[8px] rounded-full" style={{ background: 'linear-gradient(90deg, rgba(125,211,252,0.75), rgba(167,125,224,0.45), transparent)' }} />
+                      {/* 白色眩光斜条 */}
+                      <div className="absolute w-[16px] h-[4px] bg-white/70 rotate-[-24deg]" style={{ left: 7, top: 9 }} />
+                      <div className="absolute w-[8px] h-[3px] bg-white/50 rotate-[-24deg]" style={{ left: 27, top: 16 }} />
                     </div>
-                    <div className="w-[14px] h-[3.5px] bg-[#161D2B]" />
-                    <div className="w-[36px] h-[21px] rounded-[10px] bg-[#161D2B] border-2 border-[#0A0F18] overflow-hidden relative">
-                      <div className="absolute top-[4px] left-[5px] w-[13px] h-[4px] rounded-full bg-white/40 rotate-[-15deg]" />
+                    {/* 金属镜桥 */}
+                    <div className="w-[12px] h-[4px] rounded-full" style={{ background: 'linear-gradient(180deg, #C0C8D6, #6B7686)' }} />
+                    <div className="relative w-[52px] h-[30px] overflow-hidden"
+                      style={{ background: 'linear-gradient(200deg, #3A4A66 0%, #161D2B 45%, #060A12 100%)', borderRadius: '20px 14px 20px 22px / 18px 16px 18px 22px', border: '2.5px solid #0A0F18' }}>
+                      <div className="absolute inset-x-1 top-[3px] h-[8px] rounded-full" style={{ background: 'linear-gradient(270deg, rgba(125,211,252,0.75), rgba(167,125,224,0.45), transparent)' }} />
+                      <div className="absolute w-[16px] h-[4px] bg-white/70 rotate-[24deg]" style={{ right: 7, top: 9 }} />
+                      <div className="absolute w-[8px] h-[3px] bg-white/50 rotate-[24deg]" style={{ right: 27, top: 16 }} />
                     </div>
                   </div>
                 )}
