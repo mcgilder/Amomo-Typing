@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Mode, Tab, TypingStats, ExerciseItem, PetItem, PetAccessory, PetTool, Achievement } from './types';
 import { TEXTBOOK_RESOURCES, KEYBOARD_LAYOUT } from './constants';
 import { EN_EXAMPLE_ZH } from './enExampleZh';
+import LayoutTuner, { loadTune, saveTune, TUNE_DEFAULTS, LayoutTune } from './components/LayoutTuner';
 import {
   speakDirect,
   prewarmSpeech,
@@ -224,6 +225,21 @@ export const App: React.FC = () => {
     return item.chinese || item.text;
   };
 
+  // ===== 🎛 排版调试面板（用户自助微调，参数可发开发固化） =====
+  const [tune, setTune] = useState<LayoutTune>(() => loadTune());
+  const [tunerOpen, setTunerOpen] = useState(false);
+  useEffect(() => { saveTune(tune); }, [tune]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
+        e.preventDefault();
+        setTunerOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // ===== 打字区对齐：单词垂直中线 = 键盘 G 键中线（音标/中文同轴线自然居中） =====
   const wordCardRef = useRef<HTMLDivElement>(null);
   const leftColRef = useRef<HTMLDivElement>(null);
@@ -241,9 +257,9 @@ export const App: React.FC = () => {
       const gCenter = gR.left + gR.width / 2 - cardR.left;
       const wR = wordRowRef.current.getBoundingClientRect();
       const wCenter = wR.left + wR.width / 2 - cardR.left;
-      setWordShift(prev => prev + (gCenter - wCenter));
+      setWordShift(prev => prev + (gCenter + tune.offset - wCenter));
     }
-  }, [mode, isStarted]);
+  }, [mode, isStarted, tune.offset]);
 
   // 换词/词表变化：先归零渲染自然布局，再在下一拍测量对齐（无过渡污染）
   useEffect(() => { setWordShift(0); }, [currentIndex, exerciseList]);
@@ -840,7 +856,7 @@ export const App: React.FC = () => {
                 行2=键盘(8列)+统计(4列)；单词水平居中即与键盘的中线对齐 */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
               {/* 行1：目标单词卡（全宽） */}
-              <div ref={wordCardRef} className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden min-h-[228px]">
+              <div ref={wordCardRef} className="lg:col-span-12 story-card px-5 md:px-8 py-4 md:py-5 relative overflow-hidden" style={{ minHeight: tune.cardMinH }}>
                 {/* 进度条 */}
                 <div className="absolute top-0 left-0 h-2.5 bg-gradient-to-r from-[#FF8A5C] via-[#FFC94D] to-[#6BCB77] rounded-r-full transition-all duration-300" style={{ width: `${progress}%` }} />
 
@@ -866,11 +882,11 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-6">
+                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-4 items-center pt-6">
                    {/* 左 7/12：单词 + 音标 + 中文与朗读（参照定稿排布） */}
                    <div ref={leftColRef}
-                     className="md:col-span-7 flex flex-col items-center justify-center gap-1.5"
-                     style={{ transform: 'translateX(' + wordShift + 'px)' }}>
+                     className="flex flex-col items-center justify-center"
+                     style={{ transform: 'translateX(' + wordShift + 'px)', gap: tune.leftGap }}>
                     {/* Chinese PinYin Mode */}
                     {mode === Mode.CHINESE ? (
                       <>
@@ -973,7 +989,7 @@ export const App: React.FC = () => {
                         })()}
                       </div>
                       {exerciseList[currentIndex]?.phonetic && (
-                        <span className="text-4xl md:text-[45px] italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none">
+                        <span style={{ fontSize: tune.phonetic }} className="italic font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none">
                           {exerciseList[currentIndex]?.phonetic}
                         </span>
                       )}
@@ -982,7 +998,7 @@ export const App: React.FC = () => {
                     {/* 英语模式：中文翻译 + 单词发音按钮（音标下方，参照定稿排布） */}
                     {mode === Mode.ENGLISH && (
                       <div className="relative mt-1">
-                        <span className="text-4xl md:text-[45px] font-black text-[#2E93C4] font-kids leading-none">
+                        <span style={{ fontSize: tune.trans }} className="font-black text-[#2E93C4] font-kids leading-none">
                           {exerciseList[currentIndex]?.translation}
                         </span>
                         <button
@@ -996,14 +1012,14 @@ export const App: React.FC = () => {
                     )}
                    </div>
                    {/* 右 5/12：例句（大字，比正文区加大30%）+ 例句中文 + 空格挑战提示 */}
-                   <div className="md:col-span-5 flex flex-col items-center justify-center gap-2.5 text-center px-1 md:px-3">
+                   <div className="flex flex-col items-center justify-center text-center px-1 md:px-3" style={{ gap: tune.exGap }}>
                     {exerciseList[currentIndex]?.example && (
-                      <p className="text-5xl md:text-[57px] text-[#48A757] font-black italic font-kids leading-tight select-none">
+                      <p style={{ fontSize: tune.exEn }} className="text-[#48A757] font-black italic font-kids leading-tight select-none">
                         {exerciseList[currentIndex]?.example}
                       </p>
                     )}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
-                      <p className="text-4xl md:text-[45px] text-[#2E93C4] font-black font-kids leading-tight">
+                      <p style={{ fontSize: tune.exZh }} className="text-[#2E93C4] font-black font-kids leading-tight">
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
                       </p>
                     )}
@@ -1122,12 +1138,27 @@ export const App: React.FC = () => {
 
       {/* Floating Desktop Pet Companion（萌宠小屋页隐藏：页面本身就有大宠物，避免悬浮卡遮挡道具按钮） */}
       {activeTab !== Tab.PET && (
-        <FloatingCompanion
-          pet={activePet}
-          accessory={activeAccessory}
-          combo={combo}
-          lastAction={lastAction}
-        />
+        <>
+          {activeTab === Tab.PRACTICE && (
+            <>
+              <style>{`@media (min-width:768px){ .tune-grid { grid-template-columns: ${(12 - tune.exCol)}fr ${tune.exCol}fr !important; } }`}</style>
+              <button
+                onClick={() => setTunerOpen(o => !o)}
+                className="fixed bottom-3 left-3 z-[85] w-9 h-9 rounded-xl bg-white/70 hover:bg-white text-base border-2 border-[#EADBC2] shadow-sm transition-all opacity-50 hover:opacity-100 active:scale-90"
+                title="排版调试面板（Ctrl+Shift+L）"
+              >🎛</button>
+              {tunerOpen && (
+                <LayoutTuner tune={tune} onChange={setTune} onClose={() => setTunerOpen(false)} />
+              )}
+            </>
+          )}
+          <FloatingCompanion
+            pet={activePet}
+            accessory={activeAccessory}
+            combo={combo}
+            lastAction={lastAction}
+          />
+        </>
       )}
     </div>
   );
