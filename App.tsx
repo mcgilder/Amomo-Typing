@@ -280,9 +280,9 @@ export const App: React.FC = () => {
       const gCenter = gR.left + gR.width / 2 - cardR.left;
       const wR = wordRowRef.current.getBoundingClientRect();
       const wCenter = wR.left + wR.width / 2 - cardR.left;
-      setWordShift(prev => prev + (gCenter + tune.offset - wCenter));
+      setWordShift(prev => prev + (gCenter - wCenter));
     }
-  }, [mode, isStarted, tune.offset]);
+  }, [mode, isStarted]);
 
   // 换词/词表变化：先归零渲染自然布局，再在下一拍测量对齐（无过渡污染）
   useEffect(() => { setWordShift(0); }, [currentIndex, exerciseList]);
