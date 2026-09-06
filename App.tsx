@@ -38,6 +38,27 @@ const normalizePets = (pets: PetItem[]): PetItem[] =>
     energy: p.energy ?? 80
   }));
 
+// 为任意元素生成稳定 CSS 选择器（向上最多 6 层，同级用 nth-of-type 区分）
+const genSel = (el: Element): string => {
+  const parts: string[] = [];
+  let cur: Element | null = el;
+  let depth = 0;
+  while (cur && cur !== document.body && depth < 6) {
+    let sel = cur.tagName.toLowerCase();
+    const parent = cur.parentElement;
+    if (parent) {
+      const same = Array.from(parent.children).filter(c => c.tagName === cur.tagName);
+      if (same.length > 1) sel += ':nth-of-type(' + (same.indexOf(cur) + 1) + ')';
+    }
+    parts.unshift(sel);
+    cur = parent;
+    depth++;
+  }
+  return parts.join(' > ');
+};
+const hashSel = (sel: string): string =>
+  'pick_' + Math.abs(Array.from(sel).reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)).toString(36);
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.PRACTICE);
   const [mode, setMode] = useState<Mode>(Mode.ENGLISH);
@@ -225,10 +246,12 @@ export const App: React.FC = () => {
     return item.chinese || item.text;
   };
 
-  // ===== 🎛 排版调试面板 v2：页面点选元素（可多选）+ 滑块批量调整 =====
+  // ===== 🎛 排版调试面板 v3：预设目标多选批量调 + 任意元素点选单调 =====
   const [tune, setTune] = useState<LayoutTune>(() => loadTune());
   const [tunerOpen, setTunerOpen] = useState(false);
   const [selTargets, setSelTargets] = useState<string[]>([]);
+  const [pickMode, setPickMode] = useState(false);
+  const [activePickId, setActivePickId] = useState<string | null>(null);
   useEffect(() => { saveTune(tune); }, [tune]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -236,19 +259,40 @@ export const App: React.FC = () => {
         e.preventDefault();
         setTunerOpen(o => !o);
       }
+      if (e.key === 'Escape') setPickMode(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  useEffect(() => {
+    document.body.classList.toggle('pick-mode', pickMode && tunerOpen);
+    return () => document.body.classList.remove('pick-mode');
+  }, [pickMode, tunerOpen]);
   // 面板开启时：页面元素可点选（捕获阶段拦截，避免误触应用自身的点击）
   useEffect(() => {
     if (!tunerOpen) return;
     document.body.classList.add('tune-on');
     const onClick = (e: MouseEvent) => {
-      const el = (e.target as HTMLElement)?.closest?.('[data-tune-target]') as HTMLElement | null;
-      if (!el) return;
+      const t = e.target as HTMLElement;
+      if (t.closest('#tune-panel') || t.closest('[data-no-pick]') || t.closest('button[title*="排版调试面板"]')) return;
       e.preventDefault();
       e.stopPropagation();
+      if (pickMode) {
+        // 任意元素选取：生成稳定选择器 → 建立该元素的调整规则
+        const sel = genSel(t);
+        const id = hashSel(sel);
+        setTune(prev => {
+          const exists = prev.picks.find(r => r.sel === sel);
+          const picks = exists ? prev.picks : [...prev.picks, { id, sel, name: (t.textContent || '').trim().slice(0, 8) || t.tagName, css: {} }];
+          return { ...prev, picks };
+        });
+        setActivePickId(id);
+        playSoundEffect('click', 0.1);
+        return;
+      }
+      // 预设目标点选
+      const el = t.closest?.('[data-tune-target]') as HTMLElement | null;
+      if (!el) return;
       const id = el.getAttribute('data-tune-target')!;
       setSelTargets(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
       playSoundEffect('click', 0.1);
@@ -258,7 +302,7 @@ export const App: React.FC = () => {
       document.body.classList.remove('tune-on');
       document.removeEventListener('click', onClick, true);
     };
-  }, [tunerOpen]);
+  }, [tunerOpen, pickMode]);
   // 读取某元素的自定义（无则空对象走默认）
   const tt = (id: string): TargetTune => tune.t[id] || {};
   const selCls = (id: string) => (selTargets.includes(id) ? ' tune-sel' : '');
@@ -1199,6 +1243,14 @@ export const App: React.FC = () => {
         )}
       </main>
 
+      {/* 用户排版自定义规则（任意元素选取产生，全部 !important 保证生效） */}
+      {tune.picks.length > 0 && (
+        <style>{tune.picks.map(r => {
+          const decls = Object.entries(r.css).map(([k, v]) => k + ': ' + v + ' !important').join('; ');
+          const mark = tunerOpen ? ' outline: 2px solid rgba(255,138,92,0.45); outline-offset: 1px;' : '';
+          return decls ? (r.sel + ' { ' + decls + ';' + mark + ' }') : (tunerOpen ? (r.sel + ' {' + mark + ' }') : '');
+        }).join('\n')}</style>
+      )}
       {/* Floating Desktop Pet Companion（萌宠小屋页隐藏：页面本身就有大宠物，避免悬浮卡遮挡道具按钮） */}
       {activeTab !== Tab.PET && (
         <>
@@ -1211,16 +1263,28 @@ export const App: React.FC = () => {
                 title="排版调试面板（Ctrl+Shift+L）"
               >🎛</button>
               {tunerOpen && (
-                <LayoutTuner tune={tune} setTune={setTune} selected={selTargets} setSelected={setSelTargets} onClose={() => setTunerOpen(false)} />
+                <LayoutTuner
+                  tune={tune} setTune={setTune}
+                  selected={selTargets} setSelected={setSelTargets}
+                  pickMode={pickMode} onTogglePickMode={() => setPickMode(m => !m)}
+                  activePickId={activePickId}
+                  onRemovePick={(id) => {
+                    setTune(prev => ({ ...prev, picks: prev.picks.filter(r => r.id !== id) }));
+                    if (activePickId === id) setActivePickId(null);
+                  }}
+                  onClose={() => { setTunerOpen(false); setPickMode(false); setActivePickId(null); }}
+                />
               )}
             </>
           )}
-          <FloatingCompanion
-            pet={activePet}
-            accessory={activeAccessory}
-            combo={combo}
-            lastAction={lastAction}
-          />
+          <div data-no-pick="1">
+            <FloatingCompanion
+              pet={activePet}
+              accessory={activeAccessory}
+              combo={combo}
+              lastAction={lastAction}
+            />
+          </div>
         </>
       )}
     </div>
