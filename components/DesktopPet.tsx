@@ -627,7 +627,7 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
 
                 {/* 墨镜：加大酷帅盾形镜片，完全盖住双眼（架在脸上无镜腿） */}
                 {currentAccessory && currentAccessory.type === 'glasses' && (
-                  <div className="absolute top-[58px] left-1/2 z-20 pointer-events-none flex items-center" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.35))', transform: 'translateX(-50%) rotate(-2deg)' }}>
+                  <div className="absolute top-[58px] left-1/2 z-20 pointer-events-none flex items-center" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.35))', transform: 'translateX(-50%) rotate(-2deg) scale(0.8)' }}>
                     <div className="relative w-[52px] h-[30px] overflow-hidden"
                       style={{ background: 'linear-gradient(160deg, #3A4A66 0%, #161D2B 45%, #060A12 100%)', borderRadius: '14px 20px 22px 20px / 16px 18px 22px 18px', border: '2.5px solid #0A0F18' }}>
                       {/* 蓝紫反光 */}
