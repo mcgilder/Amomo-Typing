@@ -955,20 +955,21 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-x-6 gap-y-2 items-center pt-4">
-                   {/* Row1-左：要打的单词（语文模式=汉字+拼音行）——与右侧例句同一行、垂直中线互对齐 */}
+                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-x-6 gap-y-3 items-center pt-4">
+                   {/* ═ 第一组（左栏）：单词 / 单词中文 / 音标 —— 整组垂直中线对准键盘 G 键中线 ═ */}
                    <div ref={leftColRef} data-tune-target="leftCol"
                      className={'flex flex-col items-center justify-center' + selCls('leftCol')}
                      style={{
                        transform: 'translate(' + (wordShift + (tt('leftCol').dx || 0)) + 'px, ' + (tt('leftCol').dy || 0) + 'px)',
-                       gap: tt('leftCol').gap ?? 6,
+                       gap: tt('leftCol').gap ?? 10,
                      }}>
+                    {/* 第一行：要打的单词（语文模式=汉字+拼音行） */}
                     {mode === Mode.CHINESE ? (
-                      <>
-                        <div className="text-7xl md:text-8xl font-black text-[#E0633A] mb-1 font-kids leading-none drop-shadow-sm select-none">
+                      <div className="flex flex-col items-center">
+                        <div className="text-7xl md:text-8xl font-black text-[#E0633A] font-kids leading-none drop-shadow-sm select-none">
                           {exerciseList[currentIndex]?.chinese}
                         </div>
-                        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+                        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-2">
                           {(() => {
                             const plainChars = exerciseList[currentIndex]?.text.split('') || [];
                             const tonedChars = getPinyinWithTones(exerciseList[currentIndex]?.chinese || '').split('');
@@ -993,7 +994,7 @@ export const App: React.FC = () => {
                             });
                           })()}
                         </div>
-                      </>
+                      </div>
                     ) : (
                       <div ref={wordRowRef} data-tune-target="word"
                         className={'word-row flex flex-wrap justify-center items-end gap-x-2 gap-y-3' + selCls('word')}
@@ -1051,16 +1052,56 @@ export const App: React.FC = () => {
                         })()}
                       </div>
                     )}
+                    {/* 第二行：单词中文（🔊悬挂右侧不挤偏） */}
+                    <div className="relative" data-tune-target="trans"
+                      style={{
+                        fontSize: tt('trans').fs ?? 45,
+                        transform: 'translate(' + (tt('trans').dx || 0) + 'px, ' + (tt('trans').dy || 0) + 'px)',
+                      }}>
+                      <span className={'font-black text-[#2E93C4] font-kids leading-none inline-block' + selCls('trans')}>
+                        {exerciseList[currentIndex]?.translation}
+                      </span>
+                      {mode === Mode.ENGLISH && (
+                        <button
+                          onClick={() => readCurrentItem(exerciseList[currentIndex])}
+                          className="absolute top-1/2 -translate-y-1/2 -right-14 w-9 h-9 bg-[#E3F2FA] hover:bg-[#BBE2F2] text-[#2E93C4] rounded-full flex items-center justify-center text-sm transition-transform active:scale-90 border-2 border-[#BBE2F2]"
+                          title="重听单词发音"
+                        >
+                          🔊
+                        </button>
+                      )}
+                    </div>
+                    {/* 第三行：音标 */}
+                    {mode === Mode.ENGLISH && exerciseList[currentIndex]?.phonetic && (
+                      <span data-tune-target="phonetic"
+                        className={'font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none' + selCls('phonetic')}
+                        style={{
+                          fontSize: tt('phonetic').fs ?? 45,
+                          transform: 'translate(' + (tt('phonetic').dx || 0) + 'px, ' + (tt('phonetic').dy || 0) + 'px)',
+                        }}>
+                        {exerciseList[currentIndex]?.phonetic}
+                      </span>
+                    )}
+                    {mode === Mode.CHINESE && (
+                      <button
+                        onClick={() => readCurrentItem(exerciseList[currentIndex])}
+                        className="text-xs bg-[#E5F6EC] hover:bg-[#C8EED4] text-[#357F43] px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 border-2 border-[#C8EED4]"
+                      >
+                        <span>🔊 点击朗读读音</span>
+                      </button>
+                    )}
                    </div>
-                   {/* Row1-右：例句英文（英语模式）——与单词同一行、垂直中线互对齐 */}
+                   {/* ═ 第二组（右栏）：例句英文 / 例句中文 / 空格提示 —— 整组同轴线居中 ═ */}
                    <div data-tune-target="exArea"
                      className={'md:col-span-5 flex flex-col items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
                      style={{
                        transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
+                       gap: 10,
                      }}>
+                    {/* 第一行：例句英文 */}
                     {exerciseList[currentIndex]?.example && (
                       <p data-tune-target="exEn"
-                        className={'text-[#48A757] font-black italic font-kids leading-tight select-none' + selCls('exEn')}
+                        className={'text-[#48A757] font-black font-kids leading-tight select-none' + selCls('exEn')}
                         style={{
                           fontSize: tt('exEn').fs ?? 57,
                           transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
@@ -1068,51 +1109,7 @@ export const App: React.FC = () => {
                         {exerciseList[currentIndex]?.example}
                       </p>
                     )}
-                   </div>
-                   {/* Row2-左：单词中文（🔊悬挂右侧）+ 音标在中文正下方；语文模式=朗读按钮 */}
-                   {mode === Mode.ENGLISH ? (
-                     <div className="md:col-span-7 self-start flex flex-col items-center justify-center gap-1">
-                       <div data-tune-target="trans"
-                         className={'relative mt-1 font-black text-[#2E93C4] font-kids leading-none' + selCls('trans')}>
-                         <span
-                           className={'font-black text-[#2E93C4] font-kids leading-none inline-block' + selCls('trans')}
-                           style={{
-                             fontSize: tt('trans').fs ?? 45,
-                             transform: 'translate(' + (tt('trans').dx || 0) + 'px, ' + (tt('trans').dy || 0) + 'px)',
-                           }}>
-                           {exerciseList[currentIndex]?.translation}
-                         </span>
-                         <button
-                           onClick={() => readCurrentItem(exerciseList[currentIndex])}
-                           className="absolute top-1/2 -translate-y-1/2 -right-14 w-9 h-9 bg-[#E3F2FA] hover:bg-[#BBE2F2] text-[#2E93C4] rounded-full flex items-center justify-center text-sm transition-transform active:scale-90 border-2 border-[#BBE2F2]"
-                           title="重听单词发音"
-                         >
-                           🔊
-                         </button>
-                       </div>
-                       {exerciseList[currentIndex]?.phonetic && (
-                         <span data-tune-target="phonetic"
-                           className={'font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none' + selCls('phonetic')}
-                           style={{
-                             fontSize: tt('phonetic').fs ?? 45,
-                             transform: 'translate(' + (tt('phonetic').dx || 0) + 'px, ' + (tt('phonetic').dy || 0) + 'px)',
-                           }}>
-                           {exerciseList[currentIndex]?.phonetic}
-                         </span>
-                       )}
-                     </div>
-                   ) : (
-                     <div className="md:col-span-7 flex justify-center">
-                       <button
-                         onClick={() => readCurrentItem(exerciseList[currentIndex])}
-                         className="text-xs bg-[#E5F6EC] hover:bg-[#C8EED4] text-[#357F43] px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 border-2 border-[#C8EED4]"
-                       >
-                         <span>🔊 点击朗读读音</span>
-                       </button>
-                     </div>
-                   )}
-                   {/* Row2-右：例句中文（与单词中文同顶对齐→中线对齐）+ 空格提示 */}
-                   <div className="md:col-span-5 self-start flex flex-col items-center justify-center gap-2 text-center pt-1">
+                    {/* 第二行：例句中文 */}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
                       <p data-tune-target="exZh"
                         className={'text-[#2E93C4] font-black font-kids leading-none' + selCls('exZh')}
@@ -1123,6 +1120,7 @@ export const App: React.FC = () => {
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
                       </p>
                     )}
+                    {/* 第三行：空格提示条 */}
                     {isWaitingForSpace && (
                       <div data-tune-target="pill"
                         className={'bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2' + selCls('pill')}
@@ -1151,19 +1149,19 @@ export const App: React.FC = () => {
               {/* 行2-右：打字数据（单行横排大数字） */}
               <div className="lg:col-span-4 story-card px-5 py-4 flex flex-col justify-center gap-2">
                 <div className="flex items-center justify-between bg-[#FFE9E0]/70 rounded-2xl px-4 py-1">
-                  <span className="text-sm md:text-base font-black text-[#8A6F5C] font-kids">🎯 精准击键</span>
-                  <span className="text-6xl md:text-7xl font-black text-[#E0633A] font-kids leading-none">{currentStats.correct}</span>
+                  <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">🎯 精准击键</span>
+                  <span className="text-5xl md:text-6xl font-black text-[#E0633A] font-kids leading-none">{currentStats.correct}</span>
                 </div>
                 <div className="flex items-center justify-between bg-[#E3F2FA]/70 rounded-2xl px-4 py-1">
-                  <span className="text-sm md:text-base font-black text-[#8A6F5C] font-kids">⚡ 速度</span>
-                  <span className="text-6xl md:text-7xl font-black text-[#48A757] font-kids leading-none flex items-baseline gap-1">
+                  <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">⚡ 速度</span>
+                  <span className="text-5xl md:text-6xl font-black text-[#48A757] font-kids leading-none flex items-baseline gap-1">
                     {Math.round(currentStats.correct / (((Date.now() - currentStats.startTime) / 1000 / 60) || 1))}
                     <span className="text-lg md:text-xl font-black text-[#8A6F5C]">字/分</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between bg-[#FFF3D6]/70 rounded-2xl px-4 py-1">
-                  <span className="text-sm md:text-base font-black text-[#8A6F5C] font-kids">💰 本次已赚</span>
-                  <span className="text-6xl md:text-7xl font-black text-[#E8A317] font-kids leading-none flex items-baseline gap-1">
+                  <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">💰 本次已赚</span>
+                  <span className="text-5xl md:text-6xl font-black text-[#E8A317] font-kids leading-none flex items-baseline gap-1">
                     +{Math.max(1, Math.round(currentStats.correct * 0.5))}
                     <span className="text-lg md:text-xl">🪙</span>
                   </span>

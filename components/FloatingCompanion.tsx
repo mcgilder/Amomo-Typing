@@ -75,7 +75,7 @@ export const FloatingCompanion: React.FC<FloatingCompanionProps> = ({
     return (
       <div
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-4 right-4 z-40 bg-white p-2.5 rounded-full shadow-lg border-3 border-[#FFC94D] cursor-pointer hover:scale-110 transition-transform flex items-center gap-1.5 backdrop-blur-md"
+        className="fixed bottom-4 left-4 z-40 bg-white p-2.5 rounded-full shadow-lg border-3 border-[#FFC94D] cursor-pointer hover:scale-110 transition-transform flex items-center gap-1.5 backdrop-blur-md"
         title="点击展开桌面宠物伙伴"
       >
         <span className="text-2xl">{pet.avatarEmoji}</span>
@@ -85,12 +85,12 @@ export const FloatingCompanion: React.FC<FloatingCompanionProps> = ({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end pointer-events-none select-none">
+    <div className="fixed bottom-4 left-4 z-40 flex flex-col items-start pointer-events-none select-none">
       {/* Speech Bubble */}
       {bubble && (
         <div className="bg-white px-4 py-2.5 rounded-2xl shadow-lg border-3 border-[#FFC94D] text-[#5B4636] font-black text-xs md:text-sm max-w-[240px] text-center mb-2 animate-fade-in pointer-events-auto relative">
           {bubble}
-          <div className="absolute -bottom-2 right-8 w-0 h-0 border-x-6 border-x-transparent border-t-6 border-t-white"></div>
+          <div className="absolute -bottom-2 left-8 w-0 h-0 border-x-6 border-x-transparent border-t-6 border-t-white"></div>
         </div>
       )}
 
@@ -126,17 +126,17 @@ export const FloatingCompanion: React.FC<FloatingCompanionProps> = ({
 
         <div className="flex flex-col pr-1 cursor-pointer" onClick={handleClick}>
           <div className="flex items-center gap-1">
-            <span className="text-xs font-black text-[#5B4636] font-kids">{pet.name}</span>
-            <span className="text-[10px] bg-[#FF8A5C] text-white px-1.5 py-0.5 rounded-md font-black shadow-[0_2px_0_#E0633A]">
+            <span className="text-[15px] font-black text-[#5B4636] font-kids">{pet.name}</span>
+            <span className="text-xs bg-[#FF8A5C] text-white px-1.5 py-0.5 rounded-md font-black shadow-[0_2px_0_#E0633A]">
               Lv.{pet.level}
             </span>
             {evoStage >= 2 && (
-              <span className="text-[9px] bg-[#A57DE0] text-white px-1 py-0.5 rounded font-bold">
+              <span className="text-[11px] bg-[#A57DE0] text-white px-1 py-0.5 rounded font-bold">
                 {evoStage === 3 ? '神兽' : '进阶'}
               </span>
             )}
           </div>
-          <div className="text-[10px] text-[#8A6F5C] font-medium">
+          <div className="text-[13px] text-[#8A6F5C] font-bold">
             {combo > 1 ? `🔥 Combo x${combo}` : '陪你一起快乐打字'}
           </div>
         </div>
