@@ -25,6 +25,9 @@ en-example-zh.json
 # 账号交接档案（含密钥，仅本地保存）
 *.mc
 
+# 验收截图（内部测试产物，不入公开仓库）
+shots/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
