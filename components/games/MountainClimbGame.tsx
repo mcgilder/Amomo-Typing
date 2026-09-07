@@ -458,9 +458,9 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             );
           })}
 
-          {/* ---------- 目标单词：固定显示在绿色山体内（任何台阶高度都不被遮挡） ---------- */}
+          {/* ---------- 目标单词：固定显示在绿色山体内（z-40 高于爬山小人z-30与呼吸白气，永不遮挡） ---------- */}
           {!finished && !summit && !climbing && !fallPos && (
-            <div className="absolute z-20 pointer-events-none" style={{ left: '24%', top: '58%', transform: 'translateX(-50%)' }}>
+            <div className="absolute z-40 pointer-events-none" style={{ left: '24%', top: '58%', transform: 'translateX(-50%)' }}>
               {holePhase ? (
                 <div className="bg-[#FFE3E3] rounded-2xl border-3 border-[#E0633A] px-3.5 py-1.5 shadow-lg animate-pulse flex flex-col items-center whitespace-nowrap">
                   <span className="text-base font-black text-[#E0633A] font-kids">🕳️ 坑洞！别打字！</span>

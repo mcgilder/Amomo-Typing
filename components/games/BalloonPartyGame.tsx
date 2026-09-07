@@ -590,10 +590,12 @@ export const BalloonPartyGame: React.FC<BaseGameProps> = ({ onEarnCoins, onBack,
                     }`}
                     style={b.kind === 'bomb' || isGold ? undefined : { background: `radial-gradient(circle at 32% 28%, #ffffffb3, ${b.color} 62%)` }}
                   >
+                    {/* 气球字母：白字+深棕描边——任何糖果色底都清晰可读（浅绿/浅青上纯白字对比度不足的修复） */}
                     <span
-                      className={`font-mono font-black text-3xl md:text-4xl drop-shadow ${
-                        b.kind === 'bomb' ? 'text-[#FF8787]' : isGold ? 'text-[#7A4A00]' : 'text-white'
+                      className={`font-mono font-black text-3xl md:text-4xl ${
+                        b.kind === 'bomb' ? 'text-[#FF8787] drop-shadow' : isGold ? 'text-[#7A4A00] drop-shadow' : 'text-white'
                       }`}
+                      style={b.kind === 'bomb' || isGold ? undefined : { textShadow: '0 0 5px rgba(61,40,26,0.9), 0 2px 3px rgba(61,40,26,0.65)' }}
                     >
                       {b.letter.toUpperCase()}
                     </span>

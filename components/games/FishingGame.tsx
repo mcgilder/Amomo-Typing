@@ -483,7 +483,7 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
               ? { animation: `flyToCat 0.42s cubic-bezier(0.35, 0.7, 0.6, 1) forwards`, '--tx': `${f.flyTx}px`, '--ty': `${f.flyTy}px` } as React.CSSProperties
               : undefined;
             return (
-              <div key={f.id} className="absolute z-10 left-0 top-0 will-change-transform"
+              <div key={f.id} className={`absolute left-0 top-0 will-change-transform ${isTarget ? 'z-30' : 'z-10'}`}
                 style={{ transform: `translate3d(${fishPx}px, ${f.y}px, 0)` }}>
                 {/* 上下轻微浮动（整组带着牌子一起浮动） */}
                 <div className="relative" style={{ animation: f.state === 'swim' ? `fishBob 2.6s ease-in-out ${idx * 0.35}s infinite` : undefined }}>

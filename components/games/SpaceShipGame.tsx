@@ -460,23 +460,26 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           const glow = m.danger > 0.05;
           return (
             <div key={m.id} className="absolute z-20 left-0 top-0 will-change-transform"
-              style={{ transform: `translate3d(${px}px, ${m.y}px, 0) translateX(-50%) scale(${m.scale})` }}>
+              style={{ transform: `translate3d(${px}px, ${m.y}px, 0) translateX(-50%)` }}>
               {m.isBoss ? (
                 <div className="relative flex flex-col items-center">
-                  {/* 下坠热度尾焰 */}
-                  <div className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
-                    style={{ bottom: '100%', marginBottom: 4, width: 46, height: 26 + m.danger * 40, background: 'linear-gradient(to top, rgba(255,138,92,0.45), transparent)', filter: 'blur(5px)' }} />
-                  <div className={`relative flex items-center justify-center rounded-[2.2rem] ${m.wordIndex === 1 ? 'animate-wiggle' : ''}`}
-                    style={{
-                      width: 'min(46vw, 340px)', height: 96,
-                      background: 'radial-gradient(circle at 35% 30%, #B497E7 0%, #7A5FB8 48%, #4A3670 100%)',
-                      boxShadow: glow
-                        ? `0 0 ${16 + m.danger * 34}px ${6 + m.danger * 16}px rgba(239,68,68,${0.28 + m.danger * 0.45}), 0 10px 0 rgba(0,0,0,0.35)`
-                        : m.wordIndex === 1 ? '0 0 26px 8px rgba(255,138,92,0.55)' : '0 10px 0 rgba(0,0,0,0.35)',
-                    }}>
-                    <span className="text-6xl select-none" style={{ animation: 'meteorSpin 14s linear infinite' }}>🪐</span>
-                    {m.wordIndex === 1 && <span className="absolute text-4xl opacity-70 select-none">⚡</span>}
-                    {isTarget && <div className="absolute -inset-2 rounded-[2.6rem] border-4 border-[#FFC94D] animate-pulse" />}
+                  {/* 陨石体+尾焰：近大远小缩放（单词牌不缩，任何距离词都看得清） */}
+                  <div className="relative flex flex-col items-center" style={{ transform: `scale(${m.scale})` }}>
+                    {/* 下坠热度尾焰 */}
+                    <div className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+                      style={{ bottom: '100%', marginBottom: 4, width: 46, height: 26 + m.danger * 40, background: 'linear-gradient(to top, rgba(255,138,92,0.45), transparent)', filter: 'blur(5px)' }} />
+                    <div className={`relative flex items-center justify-center rounded-[2.2rem] ${m.wordIndex === 1 ? 'animate-wiggle' : ''}`}
+                      style={{
+                        width: 'min(46vw, 340px)', height: 96,
+                        background: 'radial-gradient(circle at 35% 30%, #B497E7 0%, #7A5FB8 48%, #4A3670 100%)',
+                        boxShadow: glow
+                          ? `0 0 ${16 + m.danger * 34}px ${6 + m.danger * 16}px rgba(239,68,68,${0.28 + m.danger * 0.45}), 0 10px 0 rgba(0,0,0,0.35)`
+                          : m.wordIndex === 1 ? '0 0 26px 8px rgba(255,138,92,0.55)' : '0 10px 0 rgba(0,0,0,0.35)',
+                      }}>
+                      <span className="text-6xl select-none" style={{ animation: 'meteorSpin 14s linear infinite' }}>🪐</span>
+                      {m.wordIndex === 1 && <span className="absolute text-4xl opacity-70 select-none">⚡</span>}
+                      {isTarget && <div className="absolute -inset-2 rounded-[2.6rem] border-4 border-[#FFC94D] animate-pulse" />}
+                    </div>
                   </div>
                   <div className="mt-1.5 bg-white/95 rounded-xl px-3 py-1 shadow-lg">
                     <TypedWord word={m.word.typing} typedLen={m.typed.length} size="md" />
@@ -484,23 +487,26 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
                 </div>
               ) : (
                 <div className="relative flex flex-col items-center">
-                  {/* 下坠热度尾焰（越近底线越长） */}
-                  <div className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
-                    style={{ bottom: '100%', marginBottom: 2, width: 12, height: 20 + m.danger * 34, background: 'linear-gradient(to top, rgba(255,138,92,0.5), transparent)', filter: 'blur(3px)' }} />
-                  <div className="relative" style={{ width: 62, height: 62 }}>
-                    <div className="absolute inset-0 rounded-full"
-                      style={{
-                        background: 'radial-gradient(circle at 35% 30%, #D98A5F 0%, #A0522D 55%, #6B3A24 100%)',
-                        boxShadow: glow
-                          ? `0 0 ${14 + m.danger * 30}px ${4 + m.danger * 12}px rgba(239,68,68,${0.25 + m.danger * 0.5}), 0 5px 0 rgba(0,0,0,0.3)`
-                          : '0 5px 0 rgba(0,0,0,0.3)',
-                        animation: 'meteorSpin 9s linear infinite',
-                      }}>
-                      <div className="absolute left-2.5 top-3 w-3.5 h-3.5 rounded-full bg-black/20" />
-                      <div className="absolute right-3 top-6 w-2.5 h-2.5 rounded-full bg-black/25" />
-                      <div className="absolute left-4 bottom-2.5 w-2 h-2 rounded-full bg-black/15" />
+                  {/* 陨石体+尾焰：近大远小缩放（单词牌不缩） */}
+                  <div className="relative flex flex-col items-center" style={{ transform: `scale(${m.scale})` }}>
+                    {/* 下坠热度尾焰（越近底线越长） */}
+                    <div className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+                      style={{ bottom: '100%', marginBottom: 2, width: 12, height: 20 + m.danger * 34, background: 'linear-gradient(to top, rgba(255,138,92,0.5), transparent)', filter: 'blur(3px)' }} />
+                    <div className="relative" style={{ width: 62, height: 62 }}>
+                      <div className="absolute inset-0 rounded-full"
+                        style={{
+                          background: 'radial-gradient(circle at 35% 30%, #D98A5F 0%, #A0522D 55%, #6B3A24 100%)',
+                          boxShadow: glow
+                            ? `0 0 ${14 + m.danger * 30}px ${4 + m.danger * 12}px rgba(239,68,68,${0.25 + m.danger * 0.5}), 0 5px 0 rgba(0,0,0,0.3)`
+                            : '0 5px 0 rgba(0,0,0,0.3)',
+                          animation: 'meteorSpin 9s linear infinite',
+                        }}>
+                        <div className="absolute left-2.5 top-3 w-3.5 h-3.5 rounded-full bg-black/20" />
+                        <div className="absolute right-3 top-6 w-2.5 h-2.5 rounded-full bg-black/25" />
+                        <div className="absolute left-4 bottom-2.5 w-2 h-2 rounded-full bg-black/15" />
+                      </div>
+                      {isTarget && <div className="absolute -inset-1.5 rounded-full border-4 border-[#FFC94D] animate-pulse" />}
                     </div>
-                    {isTarget && <div className="absolute -inset-1.5 rounded-full border-4 border-[#FFC94D] animate-pulse" />}
                   </div>
                   <div className="mt-1 bg-white/95 rounded-xl px-2.5 py-0.5 shadow-lg">
                     <TypedWord word={m.word.typing} typedLen={m.typed.length} size="md" />

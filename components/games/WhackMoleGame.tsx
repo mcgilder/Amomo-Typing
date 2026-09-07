@@ -583,7 +583,7 @@ export const WhackMoleGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
                             mole.kind === 'bomb'
                               ? 'bg-[#3A322C] border-[#E0633A] animate-pulse'
                               : mole.kind === 'golden'
-                              ? 'bg-gradient-to-b from-[#FFE28A] to-[#FFC94D] border-[#4FB8E7] ring-2 ring-white/80'
+                              ? 'bg-white border-[#FFC94D] ring-2 ring-[#FFC94D]/70'
                               : 'bg-white border-[#4FB8E7]'
                           }`}
                         >

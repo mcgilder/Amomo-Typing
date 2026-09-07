@@ -486,13 +486,6 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
             if (isCand && !isSel) padCls = 'w-[76px] h-[62px] bg-gradient-to-b from-[#D6F8DB] to-[#9BE8A8] border-[#F0FFF2]'; // 可选浅绿
             if (isCurrent) padCls = 'w-[82px] h-[66px] bg-gradient-to-b from-[#A5F0AD] to-[#3FA866] border-[#FFF3C9] shadow-[0_0_18px_rgba(255,224,130,0.8)]'; // 当前亮绿
 
-            const wordColor = isMama
-              ? 'text-white/95'
-              : (visitedHere && !isCand) ? 'text-white/85'
-              : isCand ? 'text-[#1E5B33]'
-              : deadSeen ? 'text-[#2E4636]'
-              : 'text-[#2E7D4A]/80';
-
             return (
               <div key={pad.id}
                 className="absolute z-10 pad-in"
@@ -512,7 +505,7 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
                     </span>
                   )}
                   {isSel && (
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-[#FFC94D] text-lg animate-bounce-soft select-none">▼</span>
+                    <span className="absolute -top-[70px] left-1/2 -translate-x-1/2 text-[#FFC94D] text-lg animate-bounce-soft select-none">▼</span>
                   )}
                   {/* 死路标志 */}
                   {deadSeen && !isCurrent && (
@@ -532,10 +525,19 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
                   {isMama && (
                     <span className="absolute -bottom-4 text-[9px] font-black text-white/75 whitespace-nowrap select-none">妈妈在这里</span>
                   )}
-                  {/* 荷叶上的单词：悬浮在荷叶正上方，26px 大字（不进荷叶内部、不截断） */}
+                  {/* 荷叶单词牌：白底深色字托底（不再让半透明绿字直接浮在水面上），选中金边放大 */}
                   {!isCurrent && (
-                    <span className={`absolute -top-8 left-1/2 -translate-x-1/2 font-mono font-black text-[26px] leading-none whitespace-nowrap select-none ${wordColor}`}
-                      style={{ textShadow: '0 2px 3px rgba(0,0,0,0.35), 0 0 8px rgba(255,255,255,0.45)' }}>
+                    <span className={`absolute -top-10 left-1/2 -translate-x-1/2 font-mono font-black text-[22px] leading-none whitespace-nowrap select-none px-2 py-1.5 rounded-xl border-3 shadow-md ${
+                      isSel
+                        ? 'bg-white text-[#1E5B33] border-[#FFC94D] scale-110'
+                        : isCand
+                        ? 'bg-white text-[#1E5B33] border-[#9BE8A8]'
+                        : isMama
+                        ? 'bg-white/90 text-[#C2447C] border-[#FFD3E0]'
+                        : deadSeen
+                        ? 'bg-white/70 text-[#5F8268] border-[#B7D3C0]'
+                        : 'bg-white/85 text-[#2E7D4A] border-[#8FD8A8]'
+                    }`}>
                       {pad.item.typing.toLowerCase()}
                     </span>
                   )}
