@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { KEYBOARD_LAYOUT, FINGER_MAPPING } from '../constants';
 
 interface KeyboardProps {
@@ -8,25 +8,6 @@ interface KeyboardProps {
 
 const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
   const normalizedTarget = targetKey.toUpperCase();
-  const spaceRef = useRef<HTMLDivElement>(null);
-
-  // 空格键水平中线对准 G 键中线：DOM 直写 margin-left（当前位置差 → 直接修正到 0，无 state 参与）
-  useEffect(() => {
-    const align = () => {
-      const g = document.querySelector('[data-key="G"]');
-      const sp = spaceRef.current;
-      if (!g || !sp) return;
-      const gR = g.getBoundingClientRect();
-      const spR = sp.getBoundingClientRect();
-      const delta = (gR.left + gR.width / 2) - (spR.left + spR.width / 2);
-      const cur = parseFloat(sp.style.marginLeft || '0') || 0;
-      sp.style.marginLeft = (cur + delta) + 'px';
-    };
-    align();
-    window.addEventListener('resize', align);
-    const t = setTimeout(align, 400);
-    return () => { window.removeEventListener('resize', align); clearTimeout(t); };
-  }, []);
 
 
   // 马卡龙糖果配色（与全局奶油绘本风统一）
@@ -76,23 +57,33 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
           })}
         </div>
       ))}
-      {/* 空格键 + 手指颜色提示（提示词在空格键右侧，水平中线对齐；空格键中线对准 G 键） */}
-      <div className="flex items-center gap-4 mt-2">
-        <div
-          ref={spaceRef}
-          className={`
-            w-48 md:w-72 h-10 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
-            ${normalizedTarget === ' ' ? 'bg-[#A57DE0] border-[#8258C7] scale-105 text-white shadow-lg -translate-y-1' : 'bg-white border-[#EADBC2] text-[#C4AE97]'}
-          `}
-        >
-          空格键 [Space]
-        </div>
-        <div className="flex items-center gap-3 text-xs text-[#8A6F5C] font-kids">
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#FF8FAB]"></div> 小指</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#FF8A5C]"></div> 无名指</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#6BCB77]"></div> 中指</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#4FB8E7]"></div> 食指</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#A57DE0]"></div> 大拇指</div>
+      {/* 空格键行：空格键水平中心对准 G 键中心（行2 ASDFGHJKL 的第 5 键）。
+          几何推导（与卡片宽度无关的恒等式，已浏览器实测验证）：
+          行2 在 items-center 下按 margin-box 居中 → G 键中心恒 = 键盘 content 中心 + 10px
+          （md 键宽56/gap8/ml-5 与 <md 键宽44 两档同为 +10）。空格键半宽 144/96
+          → 组合左缘 left = calc(50% - 134px)（md）/ calc(50% - 86px)（<md）。
+          ⚠️ 必须用 absolute 锚定：flex 居中行内加 margin 会因行宽变化被回中抵消（旧方案失败根因）；
+          calc 百分比天然响应 resize，无需任何 JS 测量。外壳 self-stretch 撑满 content 宽（定位基准）。
+          ⚠️ 组合体子项必须 shrink-0：absolute shrink-to-fit 限宽时 flex 子项会被压缩，
+          空格键被压窄导致中心偏移（<md 窄视口实测踩坑）。 */}
+      <div className="relative self-stretch h-10 md:h-12 mt-2">
+        <div className="absolute left-[calc(50%_-_86px)] md:left-[calc(50%_-_134px)] inset-y-0 flex items-center gap-3">
+          <div
+            className={`
+              shrink-0 w-48 md:w-72 h-10 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
+              ${normalizedTarget === ' ' ? 'bg-[#A57DE0] border-[#8258C7] scale-105 text-white shadow-lg -translate-y-1' : 'bg-white border-[#EADBC2] text-[#C4AE97]'}
+            `}
+          >
+            空格键 [Space]
+          </div>
+          {/* 手指颜色提示（空格键右侧，紧凑排布以适配 1366×768 卡片宽度） */}
+          <div className="shrink-0 whitespace-nowrap flex items-center gap-2 text-xs text-[#8A6F5C] font-kids">
+            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#FF8FAB]"></div> 小指</div>
+            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#FF8A5C]"></div> 无名指</div>
+            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#6BCB77]"></div> 中指</div>
+            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#4FB8E7]"></div> 食指</div>
+            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#A57DE0]"></div> 大拇指</div>
+          </div>
         </div>
       </div>
     </div>
