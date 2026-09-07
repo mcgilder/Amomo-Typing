@@ -59,6 +59,10 @@ const genSel = (el: Element): string => {
 const hashSel = (sel: string): string =>
   'pick_' + Math.abs(Array.from(sel).reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)).toString(36);
 
+// 去除句末句号（仅去掉结尾的 . 。）：例句与例句翻译按需求不带句号展示
+const stripPeriod = (s?: string): string =>
+  (s ?? '').replace(/[.。]\s*$/, '').trim();
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.PRACTICE);
   const [mode, setMode] = useState<Mode>(Mode.ENGLISH);
@@ -952,7 +956,7 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-x-6 gap-y-3 items-center pt-4">
+                  <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-x-6 gap-y-2 items-center pt-4">
                    {/* ═ 行1左：要打的单词（中文模式=汉字+拼音行 / 英文模式=音节字母行）——
                        与右格例句英文同处 grid 第 1 行，o 中线共轴线对齐（见行1右注释） ═ */}
                    <div ref={leftColRef} data-tune-target="leftCol"
@@ -1065,18 +1069,17 @@ export const App: React.FC = () => {
                           fontSize: tt('exEn').fs ?? 'clamp(28px, 3.4vw, 57px)',
                           transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
                         }}>
-                        {exerciseList[currentIndex]?.example}
+                        {stripPeriod(exerciseList[currentIndex]?.example)}
                       </p>
                     )}
                   </div>
 
-                  {/* ═ 行2左：单词中文 + 音标（grid 第 2 行；wordShift 与单词同组右移，保持上下呼应） ═ */}
-                  <div className="flex flex-col items-center"
-                    style={{
-                      transform: 'translate(' + wordShift + 'px, 0px)',
-                      gap: 10,
-                    }}>
-                    {/* 第二行：单词中文（🔊悬挂右侧不挤偏） */}
+                  {/* ═ 行2左：单词中文 —— 与右格例句中文同处 grid 第 2 行（items-center 行内共轴线居中）。
+                      几何原理：同一 grid 行的两格内容均以行中心线垂直居中 → 单词中文与例句中文的
+                      水平中线恒重合（纯 CSS 相对定位，无 JS 测量）；wordShift 与单词同组右移呼应 ═ */}
+                  <div className="flex items-center justify-center"
+                    style={{ transform: 'translate(' + wordShift + 'px, 0px)' }}>
+                    {/* 单词中文（🔊悬挂右侧不挤偏） */}
                     <div className="relative" data-tune-target="trans"
                       style={{
                         fontSize: tt('trans').fs ?? 45,
@@ -1095,7 +1098,27 @@ export const App: React.FC = () => {
                         </button>
                       )}
                     </div>
-                    {/* 第三行：音标 */}
+                  </div>
+                  {/* ═ 行2右：例句中文 —— 与单词中文同行居中共轴线；min-w-0 + clamp 字号防窄屏溢出裁切 ═ */}
+                  <div data-tune-target="exArea"
+                    className={'min-w-0 max-w-full flex items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
+                    style={{
+                      transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
+                    }}>
+                    {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
+                      <p data-tune-target="exZh"
+                        className={'text-[#2E93C4] font-black font-kids leading-none max-w-full break-words' + selCls('exZh')}
+                        style={{
+                          fontSize: tt('exZh').fs ?? 'clamp(20px, 2.6vw, 45px)',
+                          transform: 'translate(' + (tt('exZh').dx || 0) + 'px, ' + (tt('exZh').dy || 0) + 'px)',
+                        }}>
+                        {stripPeriod(EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example])}
+                      </p>
+                    )}
+                  </div>
+                  {/* ═ 行3左：音标（英语）/ 朗读按钮（语文）—— 与行3右空格提示同行 ═ */}
+                  <div className="flex flex-col items-center"
+                    style={{ transform: 'translate(' + wordShift + 'px, 0px)' }}>
                     {mode === Mode.ENGLISH && exerciseList[currentIndex]?.phonetic && (
                       <span data-tune-target="phonetic"
                         className={'font-mono font-bold text-[#8A6F5C] select-none whitespace-nowrap leading-none' + selCls('phonetic')}
@@ -1114,28 +1137,11 @@ export const App: React.FC = () => {
                         <span>🔊 点击朗读读音</span>
                       </button>
                     )}
-                   </div>
-                   {/* ═ 行2右：例句中文 / 空格提示 —— min-w-0 + clamp 字号防窄屏溢出裁切 ═ */}
-                   {/* 注意：不要加 md:col-span-N！tune-grid 已把本网格改写为两列 (12-exCol)fr/exCol fr，
-                       任何 col-span>1 都会生成隐式列把例句顶出卡片右缘（截图复现的裁切根因） */}
-                   <div data-tune-target="exArea"
-                     className={'min-w-0 max-w-full flex flex-col items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
-                     style={{
-                       transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
-                       gap: 10,
-                     }}>
-                    {/* 例句中文（同防溢出处理） */}
-                    {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
-                      <p data-tune-target="exZh"
-                        className={'text-[#2E93C4] font-black font-kids leading-none max-w-full break-words' + selCls('exZh')}
-                        style={{
-                          fontSize: tt('exZh').fs ?? 'clamp(20px, 2.6vw, 45px)',
-                          transform: 'translate(' + (tt('exZh').dx || 0) + 'px, ' + (tt('exZh').dy || 0) + 'px)',
-                        }}>
-                        {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
-                      </p>
-                    )}
-                    {/* 第三行：空格提示条 */}
+                  </div>
+                  {/* ═ 行3右：空格提示条 —— 与音标同行，等空格时出现 ═ */}
+                  {/* 注意：不要加 md:col-span-N！tune-grid 已把本网格改写为两列 (12-exCol)fr/exCol fr，
+                      任何 col-span>1 都会生成隐式列把例句顶出卡片右缘（截图复现的裁切根因） */}
+                  <div className="min-w-0 max-w-full flex items-center justify-center px-1 md:px-3">
                     {isWaitingForSpace && (
                       <div data-tune-target="pill"
                         className={'bg-[#FFF3D6] text-[#8A5F00] border-3 border-[#FFE3A3] px-4 py-1.5 rounded-full text-xs md:text-sm font-black animate-pulse flex items-center gap-2' + selCls('pill')}
@@ -1143,7 +1149,7 @@ export const App: React.FC = () => {
                         <span>⌨️</span> 按下 [ 空格键 ] 挑战下一个
                       </div>
                     )}
-                   </div>
+                  </div>
                   </div>
                 )}
               </div>
@@ -1267,6 +1273,18 @@ export const App: React.FC = () => {
                 为小学生打造的打字练习工具：教材同步词库 + 拼音英语双模式 +
                 AI 分级故事 + 打字游戏 + 萌宠陪伴 + 好习惯打卡，让练习像玩一样自然。
               </p>
+              <a
+                href="https://github.com/mcgilder/Amomo-Typing.Ver.B.1.0"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1.5 mt-1 px-4 py-1.5 rounded-full bg-[#F5F0E6] hover:bg-[#FFE3A3] border-2 border-[#EADBC2] hover:border-[#FFC94D] text-[#5B4636] text-xs font-black transition-all active:scale-95"
+                title="GitHub 开源项目地址"
+              >
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                <span>GitHub 项目地址</span>
+              </a>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

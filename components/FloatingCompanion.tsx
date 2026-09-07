@@ -73,19 +73,30 @@ export const FloatingCompanion: React.FC<FloatingCompanionProps> = ({
 
   if (isMinimized) {
     return (
-      <div
-        onClick={() => setIsMinimized(false)}
-        className="fixed bottom-4 left-4 z-40 bg-white p-2.5 rounded-full shadow-lg border-3 border-[#FFC94D] cursor-pointer hover:scale-110 transition-transform flex items-center gap-1.5 backdrop-blur-md"
-        title="点击展开桌面宠物伙伴"
-      >
-        <span className="text-2xl">{pet.avatarEmoji}</span>
-        <span className="text-xs font-black text-[#8A5F00] pr-1">伙伴</span>
+      <div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none">
+        <div className="relative h-0 max-w-[1800px] mx-auto">
+          <div
+            onClick={() => setIsMinimized(false)}
+            className="absolute left-8 bottom-8 bg-white p-2.5 rounded-full shadow-lg border-3 border-[#FFC94D] cursor-pointer hover:scale-110 transition-transform flex items-center gap-1.5 backdrop-blur-md pointer-events-auto"
+            title="点击展开桌面宠物伙伴"
+          >
+            <span className="text-2xl">{pet.avatarEmoji}</span>
+            <span className="text-xs font-black text-[#8A5F00] pr-1">伙伴</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 flex flex-col items-start pointer-events-none select-none">
+    /* 跟踪容器几何原理：与 main 同构的 max-w-[1800px] mx-auto 定心容器，
+       使宠物左缘在任何视口宽度下都精确贴合内容卡片左缘（宽屏 >1800px 时卡片
+       居中内收，fixed left-N 会脱卡）；再叠加 32px 对角内移，
+       恰好收进卡片 28px 圆角弧线之内（弧心在卡片角+(28,28)，宠物角
+       距弧心 √(16²+16²)=22.6 < 28，留 5.4px 余量） */
+    <div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none select-none">
+      <div className="relative h-0 max-w-[1800px] mx-auto">
+        <div className="absolute left-8 bottom-8 flex flex-col items-start">
       {/* Speech Bubble */}
       {bubble && (
         <div className="bg-white px-4 py-2.5 rounded-2xl shadow-lg border-3 border-[#FFC94D] text-[#5B4636] font-black text-xs md:text-sm max-w-[240px] text-center mb-2 animate-fade-in pointer-events-auto relative">
@@ -152,6 +163,8 @@ export const FloatingCompanion: React.FC<FloatingCompanionProps> = ({
         >
           ✕
         </button>
+      </div>
+    </div>
       </div>
     </div>
   );

@@ -111,6 +111,9 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
   const [nitro, setNitro] = useState(false);
   const [nitroKey, setNitroKey] = useState(0);
   const [crashKey, setCrashKey] = useState(0);
+  // 边界道"顶墙"反馈：已在最上/最下道再按同方向时，车身抖一下+短促音，
+  // 避免"按了没反应"被孩子误认为"切换不了赛道"（用户反馈的偶发根因）
+  const [bumpKey, setBumpKey] = useState(0);
   const [finished, setFinished] = useState(false);
   const [won, setWon] = useState(false);
   const [view, setView] = useState<FrameView>({ position: 0, oppPos: 0, speed: BASE_SPEED, oppSpeed: OPP_BASE, barrels: [], signX: 112 });
@@ -281,7 +284,12 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
   // ====== React 18 并发模式下可能延迟执行，导致真实键盘偶发"按了没反应"） ======
   const switchLane = useCallback((dir: -1 | 1) => {
     const nl = Math.max(0, Math.min(2, laneRef.current + dir)) as 0 | 1 | 2;
-    if (nl === laneRef.current) return;
+    if (nl === laneRef.current) {
+      // 边界道"顶墙"反馈：抖动+短促音，避免孩子误以为"切换不了赛道"
+      setBumpKey(k => k + 1);
+      playSoundEffect('error', 0.1);
+      return;
+    }
     laneRef.current = nl;
     setLane(nl);
     playSoundEffect('whoosh', 0.15);
@@ -364,6 +372,12 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
         @keyframes barrelRoll {
           0%, 100% { transform: translateY(0) rotate(-7deg); }
           50% { transform: translateY(-5px) rotate(7deg); }
+        }
+        @keyframes laneBump {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(5px) rotate(2deg); }
+          45% { transform: translateX(-4px) rotate(-2deg); }
+          70% { transform: translateX(3px); }
         }
       `}</style>
 
@@ -521,16 +535,23 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
                 }}
               >
                 <div className="relative animate-car-rumble">
-                  {/* 氮气火焰：从车尾喷出 */}
-                  {nitro && (
-                    <div className="absolute -left-16 top-3 flex items-center select-none">
-                      <span className="text-3xl animate-nitro">🔥</span>
-                      <span className="text-2xl animate-nitro">💨</span>
-                      <span className="text-xl animate-nitro opacity-70">💨</span>
-                    </div>
-                  )}
-                  <div className="text-5xl select-none drop-shadow-lg" style={{ transform: 'scaleX(-1)' }}>🏎️</div>
-                  <div className="w-14 h-1.5 bg-black/30 rounded-full mx-auto blur-[2px] -mt-1" />
+                  {/* 顶墙抖动层：bumpKey 自增触发重挂载，laneBump 播放一次 */}
+                  <div
+                    key={`bump-${bumpKey}`}
+                    className="relative"
+                    style={bumpKey > 0 ? { animation: 'laneBump 0.32s ease-out' } : undefined}
+                  >
+                    {/* 氮气火焰：从车尾喷出 */}
+                    {nitro && (
+                      <div className="absolute -left-16 top-3 flex items-center select-none">
+                        <span className="text-3xl animate-nitro">🔥</span>
+                        <span className="text-2xl animate-nitro">💨</span>
+                        <span className="text-xl animate-nitro opacity-70">💨</span>
+                      </div>
+                    )}
+                    <div className="text-5xl select-none drop-shadow-lg" style={{ transform: 'scaleX(-1)' }}>🏎️</div>
+                    <div className="w-14 h-1.5 bg-black/30 rounded-full mx-auto blur-[2px] -mt-1" />
+                  </div>
                 </div>
                 {nitro && (
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-black text-[#E0633A] bg-[#FFF3D6] px-2 py-0.5 rounded-lg border-2 border-[#FFC94D] animate-wiggle whitespace-nowrap select-none">
