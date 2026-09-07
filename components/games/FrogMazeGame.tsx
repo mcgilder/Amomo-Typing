@@ -522,12 +522,9 @@ export const FrogMazeGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, o
                   {pad.id === map.startId && (
                     <span className="absolute -bottom-4 text-[9px] font-black text-white/75 whitespace-nowrap select-none">起点</span>
                   )}
-                  {isMama && (
-                    <span className="absolute -bottom-4 text-[9px] font-black text-white/75 whitespace-nowrap select-none">妈妈在这里</span>
-                  )}
-                  {/* 荷叶单词牌：白底深色字托底（不再让半透明绿字直接浮在水面上），选中金边放大 */}
+                  {/* 荷叶单词牌：白底深色字托底；妈妈荷叶的牌放荷叶下方（上方是青蛙妈妈图案会挡牌） */}
                   {!isCurrent && (
-                    <span className={`absolute -top-10 left-1/2 -translate-x-1/2 font-mono font-black text-[22px] leading-none whitespace-nowrap select-none px-2 py-1.5 rounded-xl border-3 shadow-md ${
+                    <span className={`absolute ${isMama ? '-bottom-12' : '-top-10'} left-1/2 -translate-x-1/2 font-mono font-black text-[22px] leading-none whitespace-nowrap select-none px-2 py-1.5 rounded-xl border-3 shadow-md ${
                       isSel
                         ? 'bg-white text-[#1E5B33] border-[#FFC94D] scale-110'
                         : isCand

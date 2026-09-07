@@ -347,6 +347,9 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
         @keyframes monkeyIdle { 0%,100% { transform: rotate(-3deg) translateY(0); } 30% { transform: rotate(4deg) translateY(-3px); } 60% { transform: rotate(-2deg) translateY(0); } }
         @keyframes fallRoll { 0% { transform: rotate(-24deg) translateY(0); } 50% { transform: rotate(16deg) translateY(-5px); } 100% { transform: rotate(-24deg) translateY(0); } }
         @keyframes mistDrift { 0%, 100% { transform: translateX(-26px); } 50% { transform: translateX(26px); } }
+        @keyframes birdAcross { from { left: -8%; } to { left: 104%; } }
+        @keyframes birdAcrossRev { from { left: 104%; } to { left: -8%; } }
+        @keyframes birdBob { 0%, 100% { transform: translateY(0) rotate(-9deg); } 50% { transform: translateY(-12px) rotate(9deg); } }
         @keyframes snowFall { 0% { transform: translateY(-16px) translateX(0) rotate(0deg); } 50% { transform: translateY(220px) translateX(18px) rotate(180deg); } 100% { transform: translateY(460px) translateX(-10px) rotate(360deg); } }
         @keyframes breathPuff { 0% { opacity: 0; transform: scale(0.5) translate(0, 0); } 30% { opacity: 0.85; } 100% { opacity: 0; transform: scale(1.3) translate(10px, -22px); } }
         @keyframes plantFlag { 0% { transform: scale(0) rotate(-40deg); } 60% { transform: scale(1.25) rotate(6deg); } 100% { transform: scale(1) rotate(0deg); } }
@@ -375,8 +378,14 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
           <div className="absolute pointer-events-none z-10" style={{ left: '3%', top: '3%', opacity: sunO }}>
             <span className="block text-6xl select-none" style={{ filter: 'drop-shadow(0 0 18px rgba(255,217,102,0.9))' }}>☀️</span>
           </div>
-          <span className="absolute text-lg select-none pointer-events-none z-10" style={{ left: '30%', top: '12%', opacity: sunO * 0.85, animation: 'cloudDrift 20s linear infinite' }}>🐦</span>
-          <span className="absolute text-sm select-none pointer-events-none z-10" style={{ left: '5%', top: '20%', opacity: sunO * 0.7, animation: 'cloudDrift 30s linear infinite', animationDelay: '-9s' }}>🐦</span>
+          <span className="absolute text-lg select-none pointer-events-none z-10" style={{ top: '12%', opacity: sunO * 0.85, animation: 'birdAcross 26s linear infinite' }}>
+            <span className="inline-block" style={{ animation: 'birdBob 0.9s ease-in-out infinite' }}>🐦</span>
+          </span>
+          <span className="absolute text-sm select-none pointer-events-none z-10" style={{ top: '20%', opacity: sunO * 0.7, animation: 'birdAcrossRev 34s linear infinite', animationDelay: '-12s' }}>
+            <span className="inline-block" style={{ transform: 'scaleX(-1)' }}>
+              <span className="inline-block" style={{ animation: 'birdBob 1.1s ease-in-out infinite' }}>🐦</span>
+            </span>
+          </span>
 
           {/* ---------- 星空（顶峰带） ---------- */}
           <div className="absolute inset-0 pointer-events-none z-10" style={{ opacity: starO }}>
@@ -458,9 +467,10 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             );
           })}
 
-          {/* ---------- 目标单词：固定显示在绿色山体内（z-40 高于爬山小人z-30与呼吸白气，永不遮挡） ---------- */}
+          {/* ---------- 目标单词：固定在山体重心（left50%/top60%，整条台阶爬坡线 y≤74→13.5 均在上方远处，
+              不挡路线也不被压；z-40 高于爬山小人z-30与呼吸白气，永不遮挡） ---------- */}
           {!finished && !summit && !climbing && !fallPos && (
-            <div className="absolute z-40 pointer-events-none" style={{ left: '24%', top: '58%', transform: 'translateX(-50%)' }}>
+            <div className="absolute z-40 pointer-events-none" style={{ left: '50%', top: '60%', transform: 'translateX(-50%)' }}>
               {holePhase ? (
                 <div className="bg-[#FFE3E3] rounded-2xl border-3 border-[#E0633A] px-3.5 py-1.5 shadow-lg animate-pulse flex flex-col items-center whitespace-nowrap">
                   <span className="text-base font-black text-[#E0633A] font-kids">🕳️ 坑洞！别打字！</span>

@@ -396,7 +396,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
     <div ref={wrapRef} className="flex flex-col gap-3 w-full max-w-5xl mx-auto animate-fade-in">
       <style>{`
         @keyframes fragFly { from { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) rotate(220deg) scale(0.25); opacity: 0; } }
-        @keyframes laserShot { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes laserDash { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
         @keyframes starDrift { 0% { transform: translate(0,-40px); } 100% { transform: translate(0,620px); } }
         @keyframes shipIdle { 0%,100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(1.5px,-1px) rotate(1deg); } 50% { transform: translate(-1.5px,1px) rotate(-1deg); } 75% { transform: translate(1px,1.5px) rotate(0.5deg); } }
         @keyframes warpStreak { from { transform: translateY(-90px); } to { transform: translateY(650px); } }
@@ -456,7 +456,10 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
         {/* 陨石群（translate3d 定位 + 近大远小 + 底部红晕警示） */}
         {snap.meteors.map(m => {
           const isTarget = target?.id === m.id;
-          const px = (m.xPct / 100) * boardW;
+          // 钳制在游戏板内：安全边随近大远小 scale 放大（近底 scale≈1.55 时词牌半宽≈140px，
+          // 固定 110px 边距实测右缘仍出框 16px），scale 越大边距越宽保证整牌可见
+          const margin = Math.round(110 * Math.max(1, m.scale || 1));
+          const px = Math.max(margin, Math.min(boardW - margin, (m.xPct / 100) * boardW));
           const glow = m.danger > 0.05;
           return (
             <div key={m.id} className="absolute z-20 left-0 top-0 will-change-transform"
@@ -528,21 +531,31 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           </div>
         </div>
 
-        {/* 激光束：从飞船炮口斜射向陨石（青色渐变 + 白芯 + glow） */}
+        {/* 激光束：从飞船炮口出发的曲线弹道（二次贝塞尔上弯轨迹 + dash 飞行动画 + 弹着点光斑） */}
         {laser && (() => {
           const shipXpx = boardW / 2;
-          const tx = (laser.x / 100) * boardW;
-          const len = Math.max(20, Math.hypot(tx - shipXpx, laser.toY - SHIP_NOSE));
-          const ang = (Math.atan2(laser.toY - SHIP_NOSE, tx - shipXpx) * 180) / Math.PI;
+          // 与陨石渲染同一钳制逻辑（安全边随 scale 放大），靠边目标弹道不打偏
+          const ty = laser.toY;
+          const laserScale = Math.max(1, 0.8 + Math.max(0, ty) / DEAD_LINE * 0.75);
+          const laserMargin = Math.round(110 * laserScale);
+          const tx = Math.max(laserMargin, Math.min(boardW - laserMargin, (laser.x / 100) * boardW));
+          const mx = (shipXpx + tx) / 2, my = (SHIP_NOSE + ty) / 2;
+          const dx = tx - shipXpx, dy = ty - SHIP_NOSE;
+          const len = Math.max(20, Math.hypot(dx, dy));
+          let nx = -dy / len, ny = dx / len;
+          if (ny > 0) { nx = -nx; ny = -ny; }              // 始终向上弯出弧线
+          const lift = Math.min(90, len * 0.22);           // 弧高随射程变化
+          const d = `M ${shipXpx} ${SHIP_NOSE} Q ${(mx + nx * lift).toFixed(1)} ${(my + ny * lift).toFixed(1)} ${tx.toFixed(1)} ${ty}`;
           return (
-            <div key={laser.id} className="absolute z-30 pointer-events-none origin-left"
-              style={{ left: shipXpx, top: SHIP_NOSE, width: len, transform: `rotate(${ang}deg)` }}>
-              <div className="h-2 w-full rounded-full" style={{ background: 'linear-gradient(90deg, rgba(125,211,252,0.95), rgba(59,130,246,0.85))', boxShadow: '0 0 14px 4px rgba(56,189,248,0.65)', transformOrigin: 'left', animation: 'laserShot 0.14s ease-out' }}>
-                <div className="absolute inset-y-0 left-0 w-full flex items-center">
-                  <div className="h-[2.5px] w-full bg-white rounded-full" style={{ boxShadow: '0 0 8px #fff' }} />
-                </div>
-              </div>
-            </div>
+            <svg key={laser.id} className="absolute inset-0 z-30 pointer-events-none w-full h-full">
+              <path d={d} fill="none" stroke="rgba(125,211,252,0.95)" strokeWidth="7" strokeLinecap="round"
+                pathLength={1} strokeDasharray="1"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(56,189,248,0.8))', animation: 'laserDash 0.16s ease-out both' }} />
+              <path d={d} fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"
+                pathLength={1} strokeDasharray="1"
+                style={{ animation: 'laserDash 0.16s ease-out both' }} />
+              <circle cx={tx} cy={ty} r="7" fill="#fff" style={{ filter: 'drop-shadow(0 0 10px #7DD3FC)' }} />
+            </svg>
           );
         })()}
 

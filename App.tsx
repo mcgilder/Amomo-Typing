@@ -1091,30 +1091,32 @@ export const App: React.FC = () => {
                       </button>
                     )}
                    </div>
-                   {/* ═ 第二组（右栏）：例句英文 / 例句中文 / 空格提示 —— 整组同轴线居中 ═ */}
+                   {/* ═ 第二组（右栏）：例句英文 / 例句中文 / 空格提示 —— 整组同轴线居中；min-w-0 + clamp 字号防窄屏溢出裁切 ═ */}
+                   {/* 注意：不要加 md:col-span-N！tune-grid 已把本网格改写为两列 (12-exCol)fr/exCol fr，
+                       任何 col-span>1 都会生成隐式列把例句顶出卡片右缘（截图复现的裁切根因） */}
                    <div data-tune-target="exArea"
-                     className={'md:col-span-5 flex flex-col items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
+                     className={'min-w-0 max-w-full flex flex-col items-center justify-center text-center px-1 md:px-3' + selCls('exArea')}
                      style={{
                        transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
                        gap: 10,
                      }}>
-                    {/* 第一行：例句英文 */}
+                    {/* 第一行：例句英文（clamp 自适应字号 + 允许换行，任何屏宽完整显示） */}
                     {exerciseList[currentIndex]?.example && (
                       <p data-tune-target="exEn"
-                        className={'text-[#48A757] font-black font-kids leading-tight select-none' + selCls('exEn')}
+                        className={'text-[#48A757] font-black font-kids leading-tight select-none max-w-full break-words' + selCls('exEn')}
                         style={{
-                          fontSize: tt('exEn').fs ?? 57,
+                          fontSize: tt('exEn').fs ?? 'clamp(28px, 3.4vw, 57px)',
                           transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
                         }}>
                         {exerciseList[currentIndex]?.example}
                       </p>
                     )}
-                    {/* 第二行：例句中文 */}
+                    {/* 第二行：例句中文（同防溢出处理） */}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
                       <p data-tune-target="exZh"
-                        className={'text-[#2E93C4] font-black font-kids leading-none' + selCls('exZh')}
+                        className={'text-[#2E93C4] font-black font-kids leading-none max-w-full break-words' + selCls('exZh')}
                         style={{
-                          fontSize: tt('exZh').fs ?? 45,
+                          fontSize: tt('exZh').fs ?? 'clamp(20px, 2.6vw, 45px)',
                           transform: 'translate(' + (tt('exZh').dx || 0) + 'px, ' + (tt('exZh').dy || 0) + 'px)',
                         }}>
                         {EN_EXAMPLE_ZH[exerciseList[currentIndex]!.example]}
@@ -1146,24 +1148,31 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* 行2-右：打字数据（单行横排大数字） */}
+              {/* 行2-右：打字数据（单行横排大数字；tabular-nums 等宽数字 + 固定后缀槽 → 三行个位同列、跳变时个位纹丝不动） */}
               <div className="lg:col-span-4 story-card px-5 py-4 flex flex-col justify-center gap-2">
                 <div className="flex items-center justify-between bg-[#FFE9E0]/70 rounded-2xl px-4 py-1">
                   <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">🎯 精准击键</span>
-                  <span className="text-5xl md:text-6xl font-black text-[#E0633A] font-kids leading-none">{currentStats.correct}</span>
+                  <span className="flex items-baseline gap-1">
+                    <span className="text-5xl md:text-6xl font-black text-[#E0633A] font-kids leading-none tabular-nums">{currentStats.correct}</span>
+                    <span className="w-[52px] shrink-0" aria-hidden="true" />
+                  </span>
                 </div>
                 <div className="flex items-center justify-between bg-[#E3F2FA]/70 rounded-2xl px-4 py-1">
                   <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">⚡ 速度</span>
-                  <span className="text-5xl md:text-6xl font-black text-[#48A757] font-kids leading-none flex items-baseline gap-1">
-                    {Math.round(currentStats.correct / (((Date.now() - currentStats.startTime) / 1000 / 60) || 1))}
-                    <span className="text-lg md:text-xl font-black text-[#8A6F5C]">字/分</span>
+                  <span className="flex items-baseline gap-1">
+                    <span className="text-5xl md:text-6xl font-black text-[#48A757] font-kids leading-none tabular-nums">
+                      {Math.round(currentStats.correct / (((Date.now() - currentStats.startTime) / 1000 / 60) || 1))}
+                    </span>
+                    <span className="w-[52px] shrink-0 text-left text-lg md:text-xl font-black text-[#8A6F5C]">字/分</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between bg-[#FFF3D6]/70 rounded-2xl px-4 py-1">
                   <span className="text-base md:text-lg font-black text-[#8A6F5C] font-kids">💰 本次已赚</span>
-                  <span className="text-5xl md:text-6xl font-black text-[#E8A317] font-kids leading-none flex items-baseline gap-1">
-                    +{Math.max(1, Math.round(currentStats.correct * 0.5))}
-                    <span className="text-lg md:text-xl">🪙</span>
+                  <span className="flex items-baseline gap-1">
+                    <span className="text-5xl md:text-6xl font-black text-[#E8A317] font-kids leading-none tabular-nums">
+                      +{Math.max(1, Math.round(currentStats.correct * 0.5))}
+                    </span>
+                    <span className="w-[52px] shrink-0 text-left text-lg md:text-xl">🪙</span>
                   </span>
                 </div>
               </div>
