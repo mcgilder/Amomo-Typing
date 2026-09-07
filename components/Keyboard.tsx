@@ -6,6 +6,16 @@ interface KeyboardProps {
   targetKey: string;
 }
 
+// 手指提示气泡（目标键上方弹跳徽章：字号 20~28px，儿童可读；箭头指向按键）
+const FingerHint: React.FC<{ hand: 'left' | 'right'; finger: string; active: string }> = ({ hand, finger, active }) => (
+  <div className="absolute -top-14 flex flex-col items-center animate-bounce z-20 pointer-events-none">
+    <span className={`text-white text-lg md:text-2xl xl:text-[28px] px-4 py-1 rounded-full shadow-lg whitespace-nowrap font-kids leading-tight ${active}`}>
+      {hand === 'left' ? '左手' : '右手'} {finger}
+    </span>
+    <div className={`w-3 h-3 rotate-45 -mt-1.5 shadow-md ${active}`}></div>
+  </div>
+);
+
 const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
   const normalizedTarget = targetKey.toUpperCase();
 
@@ -26,7 +36,13 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 p-5 story-card select-none">
+    <div className="story-card select-none">
+      {/* 整组右移：键盘组作为一个组合向右平移 2 个字母键宽（md 键宽 56px → 112px）。
+          ⚠️ 仅 xl(≥1280px) 生效：lg(1024-1279) 下 col-8 卡片内宽 ≈608px，
+          632px 键盘 + 112px 位移会溢出卡片（实测几何）；xl 起 col-8 ≥818px 可容纳 744px。
+          ⚠️ 必须用 translate（视觉平移）：flex 居中行内加 margin 会被行宽回中抵消（旧踩坑）。
+          单词组的 wordShift 测量对齐会自动跟随 G 键新位置（App.tsx measureAlign 实时测 rect）。 */}
+      <div className="flex flex-col items-center gap-2 p-5 pt-16 xl:translate-x-[112px]">
       {KEYBOARD_LAYOUT.map((row, rowIndex) => (
         <div key={rowIndex} className={`flex gap-2 ${rowIndex === 1 ? 'ml-5' : rowIndex === 2 ? 'ml-10' : ''}`}>
           {row.map((key) => {
@@ -45,12 +61,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
               >
                 {key}
                 {isTarget && mapping && (
-                  <div className="absolute -top-12 flex flex-col items-center animate-bounce z-20">
-                    <span className={`text-white text-xs md:text-sm px-3 py-1 rounded-full shadow-md whitespace-nowrap font-kids ${colors.active}`}>
-                      {mapping.hand === 'left' ? '左手' : '右手'} {mapping.finger}
-                    </span>
-                    <div className={`w-2 h-2 rotate-45 -mt-1 shadow-md ${colors.active}`}></div>
-                  </div>
+                  <FingerHint hand={mapping.hand} finger={mapping.finger} active={`${colors.active}`} />
                 )}
               </div>
             );
@@ -70,11 +81,14 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
         <div className="absolute left-[calc(50%_-_86px)] md:left-[calc(50%_-_134px)] inset-y-0 flex items-center gap-3">
           <div
             className={`
-              shrink-0 w-48 md:w-72 h-10 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
+              relative shrink-0 w-48 md:w-72 h-10 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
               ${normalizedTarget === ' ' ? 'bg-[#A57DE0] border-[#8258C7] scale-105 text-white shadow-lg -translate-y-1' : 'bg-white border-[#EADBC2] text-[#C4AE97]'}
             `}
           >
             空格键 [Space]
+            {normalizedTarget === ' ' && (
+              <FingerHint hand="left" finger="大拇指" active="bg-[#A57DE0] border-[#8258C7]" />
+            )}
           </div>
           {/* 手指颜色提示（空格键右侧，紧凑排布以适配 1366×768 卡片宽度） */}
           <div className="shrink-0 whitespace-nowrap flex items-center gap-2 text-xs text-[#8A6F5C] font-kids">
@@ -85,6 +99,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
             <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-full bg-[#A57DE0]"></div> 大拇指</div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -15,13 +15,18 @@ import {
 // 3. 接近底线（>55% 进度）渐显红色警示光晕 + 头顶热度尾焰；
 // 4. 只有触底（DEAD_LINE）才扣护盾 + 爆炸 + 红闪 + 震屏。
 // 其余机制保留：激光、锁定打字、BOSS 双单词、护盾、曲速 ×2。
+//
+// 宽幅战场（max-w-4xl）：陨石安全边按「词牌实测宽度」钳制，
+// 激光从飞船鼻尖(SHIP_NOSE)发射，弹着点与陨石渲染位置同源不打偏。
 
 const SURVIVE_SEC = 150;   // 坚持到最后即通关
 const SHIELD_MAX = 3;      // 护盾格数
 const BOSS_EVERY = 8;      // 每完成 8 个单词来一个 BOSS
 const BOARD_H = 560;       // 竖版战场高度（纵向视野更长，反应时间更充裕）
 const DEAD_LINE = 460;     // 陨石越过此高度 = 撞上防线（护盾-1）
-const SHIP_NOSE = 452;     // 飞船炮口高度（激光起点）
+// 飞船鼻尖高度（激光起点）：板高560 − 底距76 − 字块高48 → 字块顶436，中心460；
+// 🚀 旋转-45°后鼻尖朝正上方，位于中心上方对角线半长 48×√2/2≈34px 处 ≈ 426~428
+const SHIP_NOSE = 428;
 
 interface Meteor {
   id: number;
@@ -39,9 +44,9 @@ interface Meteor {
   isBoss: boolean;
 }
 
-interface Laser { id: number; x: number; fromY: number; toY: number; }
+interface Laser { id: number; x: number; fromY: number; toY: number; } // x: 钳制后像素位置
 interface Frag { dx: number; dy: number; }
-interface Explosion { id: number; x: number; y: number; frags: Frag[]; big: boolean; }
+interface Explosion { id: number; x: number; y: number; frags: Frag[]; big: boolean; } // x/y: 像素坐标
 interface StarDrop { id: number; x: number; delay: number; }
 
 // 每帧推给 React 的轻量快照
@@ -75,8 +80,9 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
   const [won, setWon] = useState(false);
   const [shakeTick, setShakeTick] = useState(0);
   const [flashTick, setFlashTick] = useState(0);
-  const [boardW, setBoardW] = useState(672);
+  const [boardW, setBoardW] = useState(896);
   const boardElRef = useRef<HTMLDivElement | null>(null);   // 游戏板实测宽度
+  const meteorWRef = useRef<Record<number, number>>({});   // 陨石卡片实测宽度（词牌不缩放，宽度恒定）
   const [snap, setSnap] = useState<Snap>({ meteors: [], elapsedMs: 0, warp: false, bossWarn: false });
   const { addScore, Layer: ScoreLayer } = useFloatScores();
 
@@ -90,16 +96,34 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
   const initedRef = useRef(false);
 
   // ---------- 板宽测量（飘分/translate3d 坐标用） ----------
-  // 注意：必须测游戏板自身（max-w-2xl），不能测外层 max-w-5xl 容器，
+  // 注意：必须测游戏板自身（max-w-4xl），不能测外层 max-w-5xl 容器，
   // 否则右侧陨石的 x 坐标会算出板外，出现"看得见生成、看不见陨石"的 bug
   useEffect(() => {
     const el = boardElRef.current;
     if (!el) return;
-    const update = () => setBoardW(el.clientWidth || 672);
+    const update = () => setBoardW(el.clientWidth || 896);
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  // ---------- 陨石水平钳制（渲染 / 激光弹着点 / 爆炸 / 飘分共用同一位置） ----------
+  // 安全边取「近大远小体宽(110×scale)」与「词牌实测半宽」的较大者：
+  // 词牌不参与缩放、宽度恒定，长单词牌半宽可达 160px+，固定 110px 边距会把牌顶出板外
+  const meteorMargin = useCallback((scale: number, id: number, wordLen: number): number => {
+    const measured = meteorWRef.current[id];
+    const cardHalf = measured != null
+      ? measured / 2 + 4
+      : (wordLen * (boardW < 700 ? 26 : 37) + 20) / 2 + 4; // 首帧估算：md 桌面 48px mono≈37px/字符，窄屏 30px≈26px
+    return Math.round(Math.max(110 * Math.max(1, scale), cardHalf));
+  }, [boardW]);
+
+  const meteorPx = useCallback((m: Meteor): number => {
+    const fall = Math.max(0, m.y) / DEAD_LINE;
+    const scale = m.isBoss ? 1 + fall * 0.18 : 0.8 + fall * 0.75; // 与帧快照同一近大远小公式
+    const margin = meteorMargin(scale, m.id, wordOf(m).typing.length);
+    return Math.max(margin, Math.min(boardW - margin, (m.xPct / 100) * boardW));
+  }, [meteorMargin, boardW]);
 
   // ---------- 星空数据 ----------
   const stars = useMemo<StarDot[]>(() => {
@@ -158,12 +182,14 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
     setFinished(true);
     setWon(victory);
     meteorsRef.current = [];
+    meteorWRef.current = {};
     setLaser(null);
     setSnap(s => ({ ...s, meteors: [], bossWarn: false }));
     playSoundEffect(victory ? 'victory' : 'error', 0.35);
   }, []);
 
   // ---------- 特效 ----------
+  // x 为陨石钳制后的像素位置（与渲染位置完全一致，弹道不打偏）
   const fireLaser = useCallback((x: number, toY: number) => {
     const id = Date.now();
     setLaser({ id, x, fromY: SHIP_NOSE, toY: Math.max(0, toY) });
@@ -198,13 +224,15 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
 
   // ---------- 护盾被撞（陨石触底才触发） ----------
   const handleShieldHit = useCallback((m: Meteor) => {
-    explodeAt(m.xPct, DEAD_LINE - 18, false); // 触底爆炸
+    const px = meteorPx(m);
+    explodeAt(px, DEAD_LINE - 18, false); // 触底爆炸
     playSoundEffect('pop', 0.28);
     playSoundEffect('error', 0.32);
     setFlashTick(t => t + 1);
     setShakeTick(t => t + 1);
     setCombo(0);
-    addScore((m.xPct / 100) * boardW, DEAD_LINE - 40, '🛡 -1', '#F87171');
+    addScore(px, DEAD_LINE - 40, '🛡 -1', '#F87171');
+    delete meteorWRef.current[m.id];
     if (lockedId === m.id) setLockedId(null);
     if (shield <= 1) {
       setShield(0);
@@ -212,7 +240,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
     } else {
       setShield(s => s - 1);
     }
-  }, [lockedId, shield, finishGame, addScore, boardW, explodeAt]);
+  }, [lockedId, shield, finishGame, addScore, explodeAt, meteorPx]);
 
   // ---------- 单词完成 ----------
   const completeWordOn = useCallback((m: Meteor) => {
@@ -227,20 +255,22 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
     wordsDoneRef.current += 1;
     setWordsDone(wordsDoneRef.current);
     onEarnCoins?.(3);
-    addScore((m.xPct / 100) * boardW, Math.max(10, m.y), `+${gained}`, m.isBoss ? '#FFD700' : warpMsRef.current > 0 ? '#7DD3FC' : '#FF8A5C');
-    fireLaser(m.xPct, m.y + (m.isBoss ? 34 : 26));
+    const px = meteorPx(m); // 与渲染同源：激光弹着点/爆炸/飘分都打在陨石实际位置
+    addScore(px, Math.max(10, m.y), `+${gained}`, m.isBoss ? '#FFD700' : warpMsRef.current > 0 ? '#7DD3FC' : '#FF8A5C');
+    fireLaser(px, m.y + (m.isBoss ? 34 : 26));
     playSoundEffect('laser', 0.3);
 
     if (m.isBoss && m.wordIndex === 0) {
       // BOSS 第一层甲壳碎裂，露出第二个单词
       playSoundEffect('mole_hit', 0.3);
-      explodeAt(m.xPct, m.y + 34, false);
+      explodeAt(px, m.y + 34, false);
       m.typed = '';
       m.wordIndex = 1;
     } else {
       playSoundEffect('pop', 0.25);
-      explodeAt(m.xPct, m.y + (m.isBoss ? 34 : 26), m.isBoss);
+      explodeAt(px, m.y + (m.isBoss ? 34 : 26), m.isBoss);
       meteorsRef.current = meteorsRef.current.filter(mm => mm.id !== m.id);
+      delete meteorWRef.current[m.id];
       if (lockedId === m.id) setLockedId(null);
       if (m.isBoss) {
         spawnStarRain();
@@ -248,7 +278,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
         spawnCdRef.current = 800 * timeMul; // BOSS 战后快点恢复节奏
       }
     }
-  }, [combo, onEarnCoins, addScore, fireLaser, explodeAt, spawnStarRain, triggerWarp, lockedId, boardW]);
+  }, [combo, onEarnCoins, addScore, fireLaser, explodeAt, spawnStarRain, triggerWarp, lockedId, meteorPx, timeMul]);
 
   // ---------- 主循环（60fps rAF：陨石下坠 + 摆动 + 生成节奏） ----------
   useRafLoop((dt) => {
@@ -376,6 +406,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
   // ---------- 重开 ----------
   const resetGame = useCallback(() => {
     meteorsRef.current = [];
+    meteorWRef.current = {};
     elapsedMsRef.current = 0;
     warpMsRef.current = 0;
     spawnCdRef.current = 1200 * timeMul;
@@ -413,7 +444,7 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
       </GameHeader>
 
       <GameBoard
-        className="h-[560px] max-w-2xl mx-auto w-full"
+        className="h-[560px] max-w-4xl mx-auto w-full"
         style={{ background: 'linear-gradient(180deg, #0B1026 0%, #141B3C 55%, #1B2447 100%)' }}
         shake={shakeTick > 0}
       >
@@ -456,13 +487,16 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
         {/* 陨石群（translate3d 定位 + 近大远小 + 底部红晕警示） */}
         {snap.meteors.map(m => {
           const isTarget = target?.id === m.id;
-          // 钳制在游戏板内：安全边随近大远小 scale 放大（近底 scale≈1.55 时词牌半宽≈140px，
-          // 固定 110px 边距实测右缘仍出框 16px），scale 越大边距越宽保证整牌可见
-          const margin = Math.round(110 * Math.max(1, m.scale || 1));
+          // 钳制在游戏板内：安全边 = max(近大远小体宽, 词牌半宽)。
+          // 词牌实测宽度由 ref 回调逐帧写回 meteorWRef（布局宽不受 transform 缩放影响），
+          // 首帧未测到时按字符数估算，第二帧起即为精确值
+          const margin = meteorMargin(m.scale, m.id, m.word.typing.length);
           const px = Math.max(margin, Math.min(boardW - margin, (m.xPct / 100) * boardW));
           const glow = m.danger > 0.05;
           return (
-            <div key={m.id} className="absolute z-20 left-0 top-0 will-change-transform"
+            <div key={m.id}
+              ref={el => { if (el) meteorWRef.current[m.id] = el.offsetWidth; }}
+              className="absolute z-20 left-0 top-0 will-change-transform"
               style={{ transform: `translate3d(${px}px, ${m.y}px, 0) translateX(-50%)` }}>
               {m.isBoss ? (
                 <div className="relative flex flex-col items-center">
@@ -531,14 +565,12 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           </div>
         </div>
 
-        {/* 激光束：从飞船炮口出发的曲线弹道（二次贝塞尔上弯轨迹 + dash 飞行动画 + 弹着点光斑） */}
+        {/* 激光束：从飞船鼻尖出发的曲线弹道（二次贝塞尔上弯轨迹 + dash 飞行动画 + 弹着点光斑） */}
         {laser && (() => {
           const shipXpx = boardW / 2;
-          // 与陨石渲染同一钳制逻辑（安全边随 scale 放大），靠边目标弹道不打偏
+          // laser.x 已是发射瞬间按陨石实测宽度钳制后的像素位置，弹着点与陨石渲染位置完全重合
+          const tx = laser.x;
           const ty = laser.toY;
-          const laserScale = Math.max(1, 0.8 + Math.max(0, ty) / DEAD_LINE * 0.75);
-          const laserMargin = Math.round(110 * laserScale);
-          const tx = Math.max(laserMargin, Math.min(boardW - laserMargin, (laser.x / 100) * boardW));
           const mx = (shipXpx + tx) / 2, my = (SHIP_NOSE + ty) / 2;
           const dx = tx - shipXpx, dy = ty - SHIP_NOSE;
           const len = Math.max(20, Math.hypot(dx, dy));
@@ -559,9 +591,9 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
           );
         })()}
 
-        {/* 爆炸（橙色碎片 + 冲击环） */}
+        {/* 爆炸（橙色碎片 + 冲击环）：x/y 为像素坐标，与陨石钳制位置同源 */}
         {explosions.map(ex => (
-          <div key={ex.id} className="absolute z-30 pointer-events-none" style={{ left: `${ex.x}%`, top: ex.y }}>
+          <div key={ex.id} className="absolute z-30 pointer-events-none" style={{ left: ex.x, top: ex.y }}>
             <div className="absolute rounded-full border-4"
               style={{
                 width: ex.big ? 64 : 28, height: ex.big ? 64 : 28, left: ex.big ? -32 : -14, top: ex.big ? -32 : -14,

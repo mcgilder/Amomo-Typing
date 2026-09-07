@@ -155,29 +155,41 @@ const Umbrella: React.FC<{ open: boolean }> = ({ open }) => (
   </div>
 );
 
-// ============ 拟真水滴字母牌（三圆角方块旋转45°的真水滴形 + 渐变高光 + 下落摆动 + 尾迹水丝） ============
+// ============ 拟真水滴字母牌（严格左右轴对称版） ============
+// 对称三原则（几何原理，任何一条破坏都会"歪歪扭扭"）：
+// 1. 旋转 45° 的容器必须是正方形：旧版 74×88.8 长方形沿对角线镜像不等价 → 旋转后左右不对称；
+//    拉长改用 transform 顺序 scaleY(1.2)·rotate(45deg)（先转后拉，中轴线不动）；
+// 2. 渐变圆心与内/外阴影偏移必须落在本地 TL-BR 对角线上（x=y），旋转后恰为垂直中轴线；
+// 3. 字母回正用 rotate(-45deg)·scaleY(1/1.2)（逆变换），高光改为水平居中的竖直椭圆。
 const DropLetter: React.FC<{ ch: string; typed?: boolean; small?: boolean }> = ({ ch, typed, small }) => {
   const size = small ? 54 : 74;
   return (
     <div className="relative select-none" style={{ width: size, height: size * 1.2 }}>
-      {/* 尾迹水丝：水滴上方一条渐隐细线，强化"正在下落" */}
+      {/* 尾迹水丝：中轴线上一条渐隐细线，强化"正在下落" */}
       <div className="absolute left-1/2 -translate-x-1/2 -top-[24px] w-[3px] h-[24px] rounded-full bg-gradient-to-b from-transparent to-[#CFEAFB]/85 pointer-events-none" />
-      {/* 水滴主体：正方形只圆三个角再旋转45°，顶尖朝上 */}
-      <div className="relative w-full h-full" style={{ transform: 'rotate(45deg)' }}>
+      {/* 水滴主体：正方形只圆三个角再旋转45°，顶尖朝上（以中心为轴对称放置） */}
+      <div
+        className="absolute left-1/2 top-1/2"
+        style={{ width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2 }}
+      >
         <div
           className="absolute inset-0"
           style={{
+            transform: 'scaleY(1.2) rotate(45deg)',
             borderRadius: '0 50% 50% 50%',
             background: typed
-              ? 'radial-gradient(circle at 30% 26%, #DCF7E8 0%, #A8E6C3 36%, #6BCB77 76%, #4FAE5D 100%)'
-              : 'radial-gradient(circle at 30% 26%, #E8F6FF 0%, #A8D8F5 36%, #5FA8DD 76%, #3E82B8 100%)',
+              ? 'radial-gradient(circle at 32% 32%, #DCF7E8 0%, #A8E6C3 36%, #6BCB77 76%, #4FAE5D 100%)'
+              : 'radial-gradient(circle at 32% 32%, #E8F6FF 0%, #A8D8F5 36%, #5FA8DD 76%, #3E82B8 100%)',
             boxShadow: typed
-              ? 'inset -7px -7px 12px rgba(20,90,40,0.30), inset 5px 7px 10px rgba(255,255,255,0.55), 0 5px 9px rgba(0,30,60,0.28)'
-              : 'inset -7px -7px 12px rgba(10,60,110,0.32), inset 5px 7px 10px rgba(255,255,255,0.55), 0 5px 9px rgba(0,30,60,0.28)',
+              ? 'inset 7px 7px 12px rgba(20,90,40,0.30), inset -5px -5px 10px rgba(255,255,255,0.55), 4px 4px 9px rgba(0,30,60,0.28)'
+              : 'inset 7px 7px 12px rgba(10,60,110,0.32), inset -5px -5px 10px rgba(255,255,255,0.55), 4px 4px 9px rgba(0,30,60,0.28)',
           }}
         >
-          {/* 字母反向旋转回正 */}
-          <div className="absolute inset-0 flex items-center justify-center" style={{ transform: 'rotate(-45deg)' }}>
+          {/* 字母逆变换回正（不回正会被 scaleY 拉成瘦高字） */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ transform: 'rotate(-45deg) scaleY(0.8333)' }}
+          >
             <span
               className="font-mono font-black text-white"
               style={{ fontSize: small ? 32 : 42, textShadow: '0 2px 4px rgba(0,40,80,0.45)' }}
@@ -187,10 +199,9 @@ const DropLetter: React.FC<{ ch: string; typed?: boolean; small?: boolean }> = (
           </div>
         </div>
       </div>
-      {/* 表面高光：左上一道斜椭圆反光，玻璃感 */}
+      {/* 表面高光：水平居中的横向椭圆反光，玻璃感（左右对称） */}
       <span
-        className="absolute left-[16%] top-[10%] w-[30%] h-[16%] bg-white/75 rounded-full blur-[2px] pointer-events-none"
-        style={{ transform: 'rotate(-32deg)' }}
+        className="absolute left-[33%] top-[20%] w-[34%] h-[12%] bg-white/75 rounded-full blur-[2px] pointer-events-none"
       />
     </div>
   );

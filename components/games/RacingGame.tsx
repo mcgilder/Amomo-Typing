@@ -29,8 +29,9 @@ const METER_PCT = 0.35;       // 世界比例：每米 = 屏幕宽的 0.35%
 const OPP_HEAD_START = 35;    // 对手发车领先优势（米）：开局就在前，你追我赶
 
 // 三条泳道纵向位置（马路容器内 %，中心点）：上 / 中 / 下
-// 上道从 16% 下移到 19%：避免贴近马路上沿被路肩/圆角裁切遮挡
-const LANE_IN = [19, 50, 81];
+// 上道从 19% 下移到 24%：远离马路上沿的圆角/路肩，且与"↑↓ 换道"提示徽章、
+// 路面高光条彻底错开，任何视口下整车（含阴影）完整可见（用户反馈上道被挡的根因排查）
+const LANE_IN = [24, 50, 79];
 // 近大远小：下道最近最大，上道最远最小
 const LANE_SCALE = [0.82, 1, 1.14];
 
@@ -442,23 +443,21 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
 
             {/* ---- 快层：马路（三泳道）---- */}
             <div ref={roadRef} className="absolute inset-x-0 top-[42%] bottom-[2.5%] mx-4 rounded-[1.4rem] border-4 border-[#8B7355]/50 overflow-hidden bg-[#64707A]">
-              {/* 车道虚线：rAF 直写位移 = 速度感核心（宽度加长 168px 供滚动） */}
+              {/* 车道虚线：rAF 直写位移 = 速度感核心（宽度加长 168px 供滚动）；位置=相邻泳道中点 37%/64.5% */}
               <div
                 ref={dashTopRef}
-                className="absolute left-0 top-[33%] h-1.5 rounded-full will-change-transform"
+                className="absolute left-0 top-[37%] h-1.5 rounded-full will-change-transform"
                 style={{ width: 'calc(100% + 168px)', background: 'repeating-linear-gradient(90deg, #FFD966 0 42px, transparent 42px 84px)' }}
               />
               <div
                 ref={dashBottomRef}
-                className="absolute left-0 top-[66%] h-1.5 rounded-full will-change-transform"
+                className="absolute left-0 top-[64.5%] h-1.5 rounded-full will-change-transform"
                 style={{ width: 'calc(100% + 168px)', background: 'repeating-linear-gradient(90deg, #FFD966 0 42px, transparent 42px 84px)' }}
               />
               {/* 路肩高光 */}
               <div className="absolute inset-x-0 top-0 h-2 bg-white/15" />
-              {/* 换道提示（铁律：↑↓ 换道，不是 A/S/D！） */}
-              <div className="absolute left-3 top-1.5 text-[10px] font-black text-white/70 bg-black/25 px-2 py-0.5 rounded-lg">
-                ↑↓ 换道
-              </div>
+              {/* 换道提示徽章已移除：半透明黑底横跨上道左段，被孩子误认为"上道被挡"；
+                  操作说明保留在游戏板下方的图例卡里（↑↓ 方向键换道躲油桶） */}
 
               {/* 油桶障碍：从右侧滚来，近大远小（translate3d 定位） */}
               {view.barrels.map(b => (

@@ -719,7 +719,8 @@ export const App: React.FC = () => {
     { id: Tab.GAME, icon: '🎮', label: '游戏乐园', color: 'bg-[#6BCB77]', shadow: 'shadow-[0_4px_0_#48A757]' },
     { id: Tab.PET, icon: '🐱', label: '萌宠小屋', color: 'bg-[#FF8FAB]', shadow: 'shadow-[0_4px_0_#E0678A]' },
     { id: Tab.HABIT, icon: '🌟', label: '好习惯', color: 'bg-[#E8A317]', shadow: 'shadow-[0_4px_0_#B8860B]' },
-    { id: Tab.STATS, icon: '📊', label: '成长档案', color: 'bg-[#4FB8E7]', shadow: 'shadow-[0_4px_0_#2E93C4]' }
+    { id: Tab.STATS, icon: '📊', label: '成长档案', color: 'bg-[#4FB8E7]', shadow: 'shadow-[0_4px_0_#2E93C4]' },
+    { id: Tab.ABOUT, icon: 'ℹ️', label: '介绍', color: 'bg-[#8A6F5C]', shadow: 'shadow-[0_4px_0_#6B5844]' }
   ];
 
   return (
@@ -779,11 +780,7 @@ export const App: React.FC = () => {
                   ✏️
                 </button>
               )}
-              <span className="bg-[#FFF3D6] text-[#8A5F00] text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-[#FFE3A3]">
-                儿童护眼专属
-              </span>
             </div>
-            <p className="text-[11px] text-[#8A6F5C] font-bold">人教版同步 · 拼音英语 · AI分级童话 · 萌宠相伴</p>
           </div>
         </div>
 
@@ -956,7 +953,8 @@ export const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 tune-grid gap-x-6 gap-y-3 items-center pt-4">
-                   {/* ═ 第一组（左栏）：单词 / 单词中文 / 音标 —— 整组垂直中线对准键盘 G 键中线 ═ */}
+                   {/* ═ 行1左：要打的单词（中文模式=汉字+拼音行 / 英文模式=音节字母行）——
+                       与右格例句英文同处 grid 第 1 行，o 中线共轴线对齐（见行1右注释） ═ */}
                    <div ref={leftColRef} data-tune-target="leftCol"
                      className={'flex flex-col items-center justify-center' + selCls('leftCol')}
                      style={{
@@ -1052,6 +1050,32 @@ export const App: React.FC = () => {
                         })()}
                       </div>
                     )}
+                  </div>
+
+                  {/* ═ 行1右：例句英文 —— 与单词同处 grid 第 1 行（items-center 行内共轴线居中）
+                      几何原理（o 中线对齐恒等式）：同字体(Baloo 2)下，o 的水平中线距行盒顶
+                      ≈ 48.1%（word 96px·leading-none）/ 48.5%（exEn 57px·leading-tight），
+                      两者相差 <0.4px → 两行盒在同一 grid 行内垂直居中共轴线，o 中线即重合
+                      （例句换行为两行时，单词自动对齐两行的垂直中线，居中不变式仍成立）。 ═ */}
+                  <div className="min-w-0 max-w-full flex items-center justify-center px-1 md:px-3">
+                    {exerciseList[currentIndex]?.example && (
+                      <p data-tune-target="exEn"
+                        className={'text-[#48A757] font-black font-kids leading-tight select-none max-w-full break-words' + selCls('exEn')}
+                        style={{
+                          fontSize: tt('exEn').fs ?? 'clamp(28px, 3.4vw, 57px)',
+                          transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
+                        }}>
+                        {exerciseList[currentIndex]?.example}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ═ 行2左：单词中文 + 音标（grid 第 2 行；wordShift 与单词同组右移，保持上下呼应） ═ */}
+                  <div className="flex flex-col items-center"
+                    style={{
+                      transform: 'translate(' + wordShift + 'px, 0px)',
+                      gap: 10,
+                    }}>
                     {/* 第二行：单词中文（🔊悬挂右侧不挤偏） */}
                     <div className="relative" data-tune-target="trans"
                       style={{
@@ -1091,7 +1115,7 @@ export const App: React.FC = () => {
                       </button>
                     )}
                    </div>
-                   {/* ═ 第二组（右栏）：例句英文 / 例句中文 / 空格提示 —— 整组同轴线居中；min-w-0 + clamp 字号防窄屏溢出裁切 ═ */}
+                   {/* ═ 行2右：例句中文 / 空格提示 —— min-w-0 + clamp 字号防窄屏溢出裁切 ═ */}
                    {/* 注意：不要加 md:col-span-N！tune-grid 已把本网格改写为两列 (12-exCol)fr/exCol fr，
                        任何 col-span>1 都会生成隐式列把例句顶出卡片右缘（截图复现的裁切根因） */}
                    <div data-tune-target="exArea"
@@ -1100,18 +1124,7 @@ export const App: React.FC = () => {
                        transform: 'translate(' + (tt('exArea').dx || 0) + 'px, ' + (tt('exArea').dy || 0) + 'px)',
                        gap: 10,
                      }}>
-                    {/* 第一行：例句英文（clamp 自适应字号 + 允许换行，任何屏宽完整显示） */}
-                    {exerciseList[currentIndex]?.example && (
-                      <p data-tune-target="exEn"
-                        className={'text-[#48A757] font-black font-kids leading-tight select-none max-w-full break-words' + selCls('exEn')}
-                        style={{
-                          fontSize: tt('exEn').fs ?? 'clamp(28px, 3.4vw, 57px)',
-                          transform: 'translate(' + (tt('exEn').dx || 0) + 'px, ' + (tt('exEn').dy || 0) + 'px)',
-                        }}>
-                        {exerciseList[currentIndex]?.example}
-                      </p>
-                    )}
-                    {/* 第二行：例句中文（同防溢出处理） */}
+                    {/* 例句中文（同防溢出处理） */}
                     {mode === Mode.ENGLISH && EN_EXAMPLE_ZH[exerciseList[currentIndex]?.example || ''] && (
                       <p data-tune-target="exZh"
                         className={'text-[#2E93C4] font-black font-kids leading-none max-w-full break-words' + selCls('exZh')}
@@ -1237,6 +1250,50 @@ export const App: React.FC = () => {
             onStartTargetedPractice={handleStartTargetedPractice}
             onClearHistory={() => setSessionStats([])}
           />
+        )}
+
+        {/* TAB 6: ABOUT 项目介绍（首页顶部介绍已精简，统一收纳于此） */}
+        {activeTab === Tab.ABOUT && (
+          <div className="w-full max-w-3xl flex flex-col gap-4 animate-fade-in mx-auto">
+            <div className="story-card p-6 flex flex-col items-center gap-2 text-center">
+              <div className="w-16 h-16 bg-gradient-to-tr from-[#FF8A5C] via-[#FFC94D] to-[#6BCB77] rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-[0_5px_0_#E8A317] animate-breathe">
+                墨
+              </div>
+              <h2 className="text-2xl font-black font-kids text-[#5B4636]">{appName}</h2>
+              <span className="bg-[#FFF3D6] text-[#8A5F00] text-[11px] font-black px-3 py-1 rounded-full border-2 border-[#FFE3A3]">
+                儿童护眼专属 · 家庭自学工具
+              </span>
+              <p className="text-sm text-[#8A6F5C] font-bold leading-relaxed max-w-lg">
+                为小学生打造的打字练习工具：教材同步词库 + 拼音英语双模式 +
+                AI 分级故事 + 打字游戏 + 萌宠陪伴 + 好习惯打卡，让练习像玩一样自然。
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { icon: '🛡️', title: '儿童护眼设计', desc: '大字号净色托底、高对比配色，动态背景上文字始终看得清' },
+                { icon: '📚', title: '人教版同步词库', desc: '英语 1-6 年级（新起点/PEP）+ 语文部编版生字组词，跟随课本进度' },
+                { icon: '🔤', title: '拼音英语双模式', desc: '英语练单词例句，语文练拼音打字，两种语言一套流程' },
+                { icon: '📖', title: 'AI 分级故事', desc: '按孩子水平生成中英双语童话，生词即练即读' },
+                { icon: '🎮', title: '8 款打字游戏', desc: '字母雨、赛车、飞船、登山……在游戏里不知不觉练熟键盘' },
+                { icon: '🐱', title: '萌宠相伴', desc: '金币养宠、换装、进化，练习成果看得见摸得着' },
+                { icon: '🌟', title: '好习惯打卡', desc: '自己定目标攒积分换心愿，进步可视化可回顾' },
+                { icon: '📊', title: '成长档案', desc: '速度、正确率、成就徽章，一点一滴记录成长' },
+              ].map(f => (
+                <div key={f.title} className="story-card p-4 flex items-start gap-3">
+                  <span className="text-3xl select-none shrink-0">{f.icon}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-black text-[#5B4636] font-kids">{f.title}</span>
+                    <span className="text-xs text-[#8A6F5C] font-bold leading-relaxed">{f.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-[11px] text-[#C4AE97] font-bold">
+              回到「学打字」开始今天的练习吧 💪
+            </p>
+          </div>
         )}
       </main>
 

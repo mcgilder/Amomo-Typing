@@ -256,9 +256,10 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
     setCombo(0);
     setTyped('');
     setBanner('🕳️ 哎呀掉进坑洞啦！滚回山脚重新出发');
-    // 逐阶 waypoints：沿山坡台阶往下滚；28ms/阶 + 线性过渡 = 连续滚落（提速300%，不再闪现）
+    // 逐阶 waypoints：沿山坡台阶往下滚；56ms/阶 + 线性过渡 = 连续滚落
+    // （放慢2倍：28→56ms，转场60→120ms，翻滚0.14→0.28s，孩子才能看清滚落过程）
     const startStep = Math.max(0, stepsDone - 1);
-    const STEP_MS = 28;
+    const STEP_MS = 56;
     for (let s = startStep; s >= -1; s--) {
       const p = posOf(s);
       t((startStep - s) * STEP_MS, () => {
@@ -490,11 +491,11 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
               left: fallPos ? fallPos.x : climberLeft,
               top: fallPos ? fallPos.y : climberTop,
               transform: 'translate(-50%, -62%)',
-              transition: fallPos ? 'left 60ms linear, top 60ms linear' : undefined,
+              transition: fallPos ? 'left 120ms linear, top 120ms linear' : undefined,
             }}
           >
             {fallPos ? (
-              <div style={{ animation: 'fallRoll 0.14s ease-in-out infinite' }}>
+              <div style={{ animation: 'fallRoll 0.28s ease-in-out infinite' }}>
                 <MountainHat />
                 <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>😵</span>
                 <span className="absolute -top-4 -right-3 text-lg animate-twinkle select-none">⭐</span>

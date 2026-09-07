@@ -10,7 +10,8 @@ export enum Tab {
   STORY = 'STORY',
   PET = 'PET',
   HABIT = 'HABIT',
-  STATS = 'STATS'
+  STATS = 'STATS',
+  ABOUT = 'ABOUT'
 }
 
 export interface ExerciseItem {
