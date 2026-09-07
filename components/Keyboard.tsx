@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { KEYBOARD_LAYOUT, FINGER_MAPPING } from '../constants';
 
 interface KeyboardProps {
@@ -8,28 +8,26 @@ interface KeyboardProps {
 
 const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
   const normalizedTarget = targetKey.toUpperCase();
-  const cardRef = useRef<HTMLDivElement>(null);
-  const gKeyRef = useRef<HTMLDivElement>(null);
   const spaceRef = useRef<HTMLDivElement>(null);
-  const [spaceShift, setSpaceShift] = useState(0);
 
-  // 空格键水平中线对准 G 键中线
+  // 空格键水平中线对准 G 键中线：DOM 直写 margin-left（当前位置差 → 直接修正到 0，无 state 参与）
   useEffect(() => {
     const align = () => {
-      const g = gKeyRef.current, sp = spaceRef.current, card = cardRef.current;
-      if (!g || !sp || !card) return;
-      const cardR = card.getBoundingClientRect();
+      const g = document.querySelector('[data-key="G"]');
+      const sp = spaceRef.current;
+      if (!g || !sp) return;
       const gR = g.getBoundingClientRect();
       const spR = sp.getBoundingClientRect();
-      const gCenter = gR.left + gR.width / 2 - cardR.left;
-      const spCenter = spR.left + spR.width / 2 - cardR.left;
-      setSpaceShift(prev => prev + (gCenter - spCenter));
+      const delta = (gR.left + gR.width / 2) - (spR.left + spR.width / 2);
+      const cur = parseFloat(sp.style.marginLeft || '0') || 0;
+      sp.style.marginLeft = (cur + delta) + 'px';
     };
     align();
     window.addEventListener('resize', align);
     const t = setTimeout(align, 400);
     return () => { window.removeEventListener('resize', align); clearTimeout(t); };
   }, []);
+
 
   // 马卡龙糖果配色（与全局奶油绘本风统一）
   const getFingerColor = (key: string) => {
@@ -47,7 +45,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
   };
 
   return (
-    <div ref={cardRef} className="flex flex-col items-center gap-2 p-5 story-card select-none">
+    <div className="flex flex-col items-center gap-2 p-5 story-card select-none">
       {KEYBOARD_LAYOUT.map((row, rowIndex) => (
         <div key={rowIndex} className={`flex gap-2 ${rowIndex === 1 ? 'ml-5' : rowIndex === 2 ? 'ml-10' : ''}`}>
           {row.map((key) => {
@@ -59,7 +57,6 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
               <div
                 key={key}
                 data-key={key}
-                ref={key === 'G' ? gKeyRef : undefined}
                 className={`
                   relative w-11 h-10 md:w-14 md:h-12 flex items-center justify-center rounded-xl text-xl md:text-2xl font-bold border-b-[5px] transition-all duration-150
                   ${isTarget ? `${colors.active} scale-110 shadow-lg z-10 text-white -translate-y-1 animate-pulse` : `${colors.bg} ${colors.text} ${colors.border} hover:brightness-97`}
@@ -83,9 +80,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
       <div className="flex items-center gap-4 mt-2">
         <div
           ref={spaceRef}
-          style={{ transform: 'translateX(' + spaceShift + 'px)' }}
           className={`
-            w-48 h-10 md:w-72 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
+            w-48 md:w-72 h-10 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
             ${normalizedTarget === ' ' ? 'bg-[#A57DE0] border-[#8258C7] scale-105 text-white shadow-lg -translate-y-1' : 'bg-white border-[#EADBC2] text-[#C4AE97]'}
           `}
         >
