@@ -141,6 +141,8 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
         isBoss: false,
       });
       playSoundEffect('whoosh', 0.08);
+      // 单词一出现就读（场上仅此一个带词陨石时才读，避免多词语音重叠）
+      if (meteorsRef.current.filter(m => !m.isBoss).length === 1) speakGameWord(main);
     }
   }, [pickWord]);
 
@@ -214,7 +216,6 @@ export const SpaceShipGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, 
 
   // ---------- 单词完成 ----------
   const completeWordOn = useCallback((m: Meteor) => {
-    speakGameWord(wordOf(m)); // 打完单词语音朗读
     const nc = combo + 1;
     let gained = (10 + nc * 2) * (m.isBoss ? 3 : 1);
     if (warpMsRef.current > 0) gained *= 2;

@@ -294,13 +294,15 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
     onEarnCoins?.(2);
     playSoundEffect('combo', 0.3);
     playSoundEffect('sparkle', 0.18);
-    speakGameWord(targetRef.current);
     setRainbow(true);
     later(() => setRainbow(false), 1600);
     addScore(boardW() / 2, 130, `+${bonus} 🌈`, '#9775FA');
     typedLenRef.current = 0;
     setTypedLen(0);
-    setTarget(pickWord());
+    const nt = pickWord();
+    targetRef.current = nt;
+    setTarget(nt);
+    speakGameWord(nt); // 新单词一出现就读
   }, [onEarnCoins, addScore, pickWord, later]);
 
   // 雨滴落到伞面上："嗒"一声弹开 + 小猫开心
@@ -385,9 +387,11 @@ export const LetterRainGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins,
     return () => clearTimeout(t);
   }, [timeLeft, gameOver, endGame]);
 
-  // 开局先掉第一滴
+  // 开局：读初始单词 + 掉第一滴
   useEffect(() => {
+    speakGameWord(target);
     spawnDrop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spawnDrop]);
 
   // 键盘：只在 falling 阶段接收字母输入

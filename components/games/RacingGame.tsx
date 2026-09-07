@@ -131,9 +131,11 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
   const dashTopRef = useRef<HTMLDivElement>(null);
   const dashBottomRef = useRef<HTMLDivElement>(null);
 
-  // 初始路牌
+  // 初始路牌（一出现就读）
   useEffect(() => {
-    setSign({ id: Date.now(), item: pickWord(), typed: '' });
+    const first = pickWord();
+    setSign({ id: Date.now(), item: first, typed: '' });
+    speakGameWord(first);
   }, [pickWord]);
 
   // 赛道尺寸测量（translate3d 像素定位用；crashKey 重挂载后 ref 自动指向新节点）
@@ -234,7 +236,6 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
     setMaxCombo(m => Math.max(m, nc));
     onEarnCoins?.(3);
     playSoundEffect('car_engine', 0.32);
-    speakGameWord(sign?.item || { typing: '', display: '' }); // 打完单词语音朗读
 
     const w = worldRef.current;
     w.wordsDone += 1;
@@ -268,9 +269,11 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
       playSoundEffect('whoosh', 0.14);
     }
 
-    // 新单词：热气球从右侧重新飞入
+    // 新单词：热气球飞入，一出现就读
     w.signX = 112;
-    setSign({ id: Date.now(), item: pickWord(), typed: '' });
+    const nw = pickWord();
+    setSign({ id: Date.now(), item: nw, typed: '' });
+    speakGameWord(nw);
   }, [combo, addScore, onEarnCoins, pickWord, sign]);
 
   // ====== 换道：事件期直接由 laneRef 计算目标道并同步（updater 内赋 ref 是渲染期副作用，
@@ -328,7 +331,9 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
     setScore(0); setCombo(0); setMaxCombo(0);
     setNitro(false); setFinished(false); setWon(false); setCrashKey(0);
     setView({ position: 0, oppPos: 0, speed: BASE_SPEED, oppSpeed: OPP_BASE, barrels: [], signX: 112 });
-    setSign({ id: Date.now(), item: pickWord(), typed: '' });
+    const first = pickWord();
+    setSign({ id: Date.now(), item: first, typed: '' });
+    speakGameWord(first);
   };
 
   // ====== 渲染数据 ======
@@ -415,7 +420,6 @@ export const RacingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, onB
               </div>
             </div>
             <span className="absolute left-[7%] top-[5%] text-4xl select-none animate-twinkle">☀️</span>
-            <span className="absolute right-[16%] top-[10%] text-3xl select-none animate-twinkle" style={{ animationDelay: '.9s' }}>🌤️</span>
 
             {/* ---- 慢层：远山（rAF 直写位移） ---- */}
             <div className="absolute inset-x-0 top-[22%] h-[22%] overflow-hidden">

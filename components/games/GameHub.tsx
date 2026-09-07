@@ -34,42 +34,42 @@ interface GameCard {
 const GAME_CARDS: GameCard[] = [
   {
     id: 'RAIN', emoji: '🌧️', name: '字母雨·小猫打伞',
-    desc: '雨滴掉下来啦！敲对字母给小猫撑伞，听小猫开心喵喵笑～',
+    desc: '雨滴掉下来，敲对字母，小猫就不会淋雨啦！',
     tag: '入门·打字母', btnClass: 'btn-grape', iconBg: 'bg-[#F3E9FA] border-[#E2D0F2]'
   },
   {
     id: 'FROG', emoji: '🐸', name: '小青蛙找妈妈',
-    desc: '看着地图选路线，敲对单词跳荷叶，找到青蛙妈妈！',
+    desc: '敲对荷叶上的单词，一步步跳到青蛙妈妈身边！',
     tag: '迷宫探索', btnClass: 'btn-grass', iconBg: 'bg-[#E5F6EC] border-[#C8EED4]'
   },
   {
     id: 'MOLE', emoji: '🔨', name: '打地鼠·极速',
-    desc: '贱萌地鼠举着单词钻出来！连击越高冒得越快，金地鼠双倍分！',
+    desc: '地鼠举着单词冒出来，快敲它！金地鼠分数翻倍！',
     tag: '速度反应', btnClass: 'btn-honey', iconBg: 'bg-[#FFF3D6] border-[#FFE3A3]'
   },
   {
     id: 'RACE', emoji: '🏎️', name: '闪避赛车',
-    desc: '敲对单词点燃氮气！换道躲开油桶，追上蓝色对手车冲过终点！',
+    desc: '敲对单词就加速，躲开油桶，超越蓝色小汽车！',
     tag: '竞速闪避', btnClass: 'btn-coral', iconBg: 'bg-[#FFE9E0] border-[#FFD1BE]'
   },
   {
     id: 'BALLOON', emoji: '🎈', name: '气球派对',
-    desc: '气球带着字母飞上天！敲对字母把气球砰砰炸开，小心炸弹！',
+    desc: '敲字母打气球，砰砰砰！黑色的炸弹别碰哦！',
     tag: '限时挑战', btnClass: 'btn-berry', iconBg: 'bg-[#FFE9F0] border-[#FFD3E0]'
   },
   {
     id: 'SPACE', emoji: '🚀', name: '星际飞船',
-    desc: '陨石驮着单词砸下来！敲单词发射激光，还有巨型BOSS陨石！',
+    desc: '敲掉陨石上的单词，保卫地球不被砸到！',
     tag: '太空射击', btnClass: 'btn-sky', iconBg: 'bg-[#E3F2FA] border-[#BBE2F2]'
   },
   {
     id: 'FISH', emoji: '🎣', name: '小猫钓鱼',
-    desc: '鱼儿驮着单词游来游去，敲单词下钩钓上来！金色锦鲤三倍分～',
+    desc: '敲对鱼身上的单词，把小鱼钓进篮子里！',
     tag: '悠闲专注', btnClass: 'btn-sky', iconBg: 'bg-[#E3F2FA] border-[#BBE2F2]'
   },
   {
     id: 'CLIMB', emoji: '⛰️', name: '登山小勇士',
-    desc: '敲完一个词跳一阶！穿过云海星空登顶看日出，营地有篝火～',
+    desc: '每敲对一个单词，小猴子就往上跳一格，加油登顶！',
     tag: '勇攀高峰', btnClass: 'btn-coral', iconBg: 'bg-[#FFE9E0] border-[#FFD1BE]'
   },
 ];
@@ -215,8 +215,7 @@ export const GameHub: React.FC<GameHubProps> = ({ customWordList, customTitle, o
                   {card.emoji}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <h3 className="text-base font-black text-[#5B4636] font-kids leading-tight">{card.name}</h3>
-                  <span className="self-start mt-1 text-[10px] font-black text-[#8A6F5C] bg-[#FFF8EE] border-2 border-[#FFE8C8] px-2 py-0.5 rounded-full">{card.tag}</span>
+                  <h3 className="text-2xl font-black text-[#5B4636] font-kids leading-tight">{card.name}</h3>
                 </div>
               </div>
               <p className="text-[15px] md:text-[16px] text-[#8A6F5C] font-bold leading-snug line-clamp-2 min-h-[44px]">{card.desc}</p>

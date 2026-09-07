@@ -218,7 +218,6 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
         setBasketTick(k => k + 1);
         playSoundEffect('coin', 0.2);
         playSoundEffect('sparkle', 0.15);
-        speakGameWord(f.item); // 钓上来！语音朗读单词
       }
     });
   }, [combo, lockedId, boardW, catLeft, onEarnCoins, fishRush, addSplash, addScore, t]);
@@ -291,6 +290,7 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
           const target = cand.reduce((a, b) => (Math.abs(a.x - HOOK_X) <= Math.abs(b.x - HOOK_X) ? a : b));
           setLockedId(target.id);
           playSoundEffect('whoosh', 0.1);
+          speakGameWord(target.item); // 目标一出现就读
           advance(target, key);
         } else {
           playSoundEffect('error', 0.12);
@@ -302,6 +302,7 @@ export const FishingGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoins, on
       if (cand.length) {
         const target = cand.reduce((a, b) => (Math.abs(a.x - HOOK_X) <= Math.abs(b.x - HOOK_X) ? a : b));
         setLockedId(target.id);
+        speakGameWord(target.item); // 目标一出现就读
         advance(target, key);
       } else {
         playSoundEffect('error', 0.12);

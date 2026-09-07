@@ -122,6 +122,15 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
 
   useEffect(() => () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; }, []);
 
+  // 开局：初始单词一出现就读
+  const initSpokeRef = useRef(false);
+  useEffect(() => {
+    if (initSpokeRef.current) return;
+    initSpokeRef.current = true;
+    speakGameWord(currentWord);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ---------- 环境（花 / 树 / 雾 / 雪 / 星） ----------
   const flowers = useMemo(() => Array.from({ length: 9 }, (_, i) => ({
     x: 3 + (i % 5) * 8 + Math.random() * 4, y: 68 + Math.floor(i / 5) * 13 + Math.random() * 6,
@@ -226,10 +235,14 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             playSoundEffect('sparkle', 0.2);
             setScore(s => s + 5); // 克制力奖励
             t(1300, () => setBanner(null));
-            setCurrentWord(pickWord());
+            const nw = pickWord();
+            setCurrentWord(nw);
+            speakGameWord(nw);
           });
         } else {
-          setCurrentWord(pickWord());
+          const nw = pickWord();
+          setCurrentWord(nw);
+          speakGameWord(nw);
         }
       }
     });
@@ -258,7 +271,9 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
       setFalling(false);
       setStepsDone(0);
       setBanner(null);
-      setCurrentWord(pickWord());
+      const nw = pickWord();
+      setCurrentWord(nw);
+      speakGameWord(nw);
     });
   }, [t, pickWord, stepsDone, boardW]);
 
@@ -274,7 +289,6 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
       playSoundEffect('click', 0.12);
       const nt = typed + key;
       if (nt.length >= w.length) {
-        speakGameWord(currentWord); // 跳跃前语音朗读单词
         startClimb();
       } else {
         setTyped(nt);
@@ -295,7 +309,11 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
   const resetGame = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    setStepsDone(0); setCurrentWord(pickWord()); setTyped('');
+    setStepsDone(0);
+    const rw = pickWord();
+    setCurrentWord(rw);
+    setTyped('');
+    speakGameWord(rw);
     setClimbing(null); setScore(0); setCombo(0); setMaxCombo(0);
     setCoinsEarned(0); setElapsed(0); setSummit(false);
     setFinished(false); setCampTick(0); setBanner(null);
@@ -435,27 +453,27 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
                   <span className={`absolute -top-8 left-1/2 -translate-x-1/2 text-2xl select-none ${campTick > 0 && i === stepsDone - 1 ? 'animate-breathe' : ''}`}
                     style={{ filter: 'drop-shadow(0 0 8px rgba(255,138,92,0.85))' }}>🔥</span>
                 )}
-                {/* 下一阶目标词：默认悬浮台阶正上方；高台阶（接近板顶）自动改到台阶下方，避免被窗口上沿裁掉 */}
-                {isNext && !finished && (
-                  <div className={`absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none ${p.y < 30 ? 'top-full mt-2.5' : 'bottom-full mb-2.5'}`}>
-                    {holePhase ? (
-                      <div className="bg-[#FFE3E3] rounded-2xl border-3 border-[#E0633A] px-3.5 py-1.5 shadow-lg animate-pulse flex flex-col items-center whitespace-nowrap">
-                        <span className="text-base font-black text-[#E0633A] font-kids">🕳️ 坑洞！别打字！</span>
-                        <span className="text-[10px] font-bold text-[#8A6F5C]">忍住不敲，等它自动填好 +5分</span>
-                      </div>
-                    ) : !climbing ? (
-                      <div className="bg-white/95 rounded-2xl border-3 border-[#6BCB77] px-3 py-1 shadow-md flex flex-col items-center whitespace-nowrap">
-                        <TypedWord word={currentWord.typing} typedLen={typed.length} size="md" />
-                        <span className="text-[10px] font-bold text-[#8A6F5C] font-kids">{currentWord.display}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+
               </div>
             );
           })}
 
-          {/* ---------- 跳跃小人（🧗 面朝山坡攀爬 + CSS 登山帽；掉坑顺坡滚落带震动） ---------- */}
+          {/* ---------- 目标单词：固定显示在绿色山体内（任何台阶高度都不被遮挡） ---------- */}
+          {!finished && !summit && !climbing && !fallPos && (
+            <div className="absolute z-20 pointer-events-none" style={{ left: '24%', top: '58%', transform: 'translateX(-50%)' }}>
+              {holePhase ? (
+                <div className="bg-[#FFE3E3] rounded-2xl border-3 border-[#E0633A] px-3.5 py-1.5 shadow-lg animate-pulse flex flex-col items-center whitespace-nowrap">
+                  <span className="text-base font-black text-[#E0633A] font-kids">🕳️ 坑洞！别打字！</span>
+                  <span className="text-[10px] font-bold text-[#8A6F5C]">忍住不敲，等它自动填好 +5分</span>
+                </div>
+              ) : (
+                <div className="bg-white/95 rounded-2xl border-3 border-[#6BCB77] px-4 py-1.5 shadow-md flex flex-col items-center whitespace-nowrap">
+                  <TypedWord word={currentWord.typing} typedLen={typed.length} size="md" />
+                  <span className="text-[11px] font-bold text-[#8A6F5C] font-kids">{currentWord.display}</span>
+                </div>
+              )}
+            </div>
+          )}
           <div
             className="absolute z-30 pointer-events-none"
             style={{
@@ -480,13 +498,13 @@ export const MountainClimbGame: React.FC<BaseGameProps> = ({ wordList, onEarnCoi
             ) : climbing ? (
               <div style={{ animation: `heroJump ${climbing.dur}ms linear forwards`, '--dx': `${climbing.dx}px`, '--dy': `${climbing.dy}px`, '--arc': `${climbing.arc}px` } as React.CSSProperties}>
                 <MountainHat />
-                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🐒</span>
+                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))', transform: 'scaleX(-1)' }}>🐒</span>
                 {climbing.rush && <span className="absolute -left-6 top-3 text-base select-none">💨</span>}
               </div>
             ) : (
               <div className={`relative ${summit ? 'animate-breathe' : ''}`} style={{ animation: summit ? undefined : 'monkeyIdle 1.4s ease-in-out infinite' }}>
                 <MountainHat />
-                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))' }}>🐒</span>
+                <span className="block text-4xl select-none" style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.3))', transform: 'scaleX(-1)' }}>🐒</span>
               </div>
             )}
             {/* 营地烤火：爱心回血动画 */}

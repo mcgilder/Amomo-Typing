@@ -56,7 +56,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
           })}
         </div>
       ))}
-      <div className="flex gap-2 mt-2">
+      {/* 空格键 + 手指颜色提示（提示词在空格键右侧，水平中线对齐） */}
+      <div className="flex items-center gap-4 mt-2">
         <div
           className={`
             w-48 h-10 md:w-72 md:h-12 rounded-xl flex items-center justify-center font-kids text-xl md:text-2xl border-b-[5px] transition-all
@@ -65,18 +66,12 @@ const Keyboard: React.FC<KeyboardProps> = ({ targetKey }) => {
         >
           空格键 [Space]
         </div>
-      </div>
-
-      {/* Finger Legend */}
-      <div className="flex justify-between w-full max-w-lg mt-2 text-xs text-[#8A6F5C] font-kids">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 text-xs text-[#8A6F5C] font-kids">
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#FF8FAB]"></div> 小指</div>
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#FF8A5C]"></div> 无名指</div>
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#6BCB77]"></div> 中指</div>
           <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#4FB8E7]"></div> 食指</div>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-[#A57DE0]"></div> 大拇指
+          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-[#A57DE0]"></div> 大拇指</div>
         </div>
       </div>
     </div>
